@@ -1,0 +1,9 @@
+.checkbox-large {
+  transform: scale(1.25); /* Increase the size by 1.5x */
+}
+.space-doclist{
+  height: 420px;
+}
+.doc-data{
+  max-width: 90px;
+}

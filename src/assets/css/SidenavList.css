@@ -1,0 +1,52 @@
+.sidenav-button {
+    overflow-x: hidden; /* Ẩn thanh cuộn ngang */
+  }
+  
+  .sidenav-button .ms-4 {
+    width: 100%; /* Đảm bảo phần tử con chiếm toàn bộ chiều rộng của phần tử cha */
+    box-sizing: border-box; /* Đảm bảo padding và border không làm tăng chiều rộng phần tử */
+  }
+  #sys-user-collapse {
+    overflow-x: hidden; /* Ẩn thanh cuộn ngang */
+  }
+  i#iconHome {
+    margin-top: -8px;
+  }
+  a.nav-link.ms-4 {
+    transition: transform 0.3s ease;
+  }
+  a.nav-link.ms-4:hover {
+    transform: translateY(-1px);
+  }
+  span.nav-link-text.ms-1 {
+    font-weight: 800;
+}
+.sidenav-header {
+  position: sticky !important;
+  top: 0;
+  background-color: #fff;
+  z-index: inherit;
+}
+.text-primary.text-lg.opacity-10 {
+  right: -33px;
+}
+.ms-12.text-primary.text-sm.opacity-10 {
+  right: -10px;
+}
+.ms-5{
+  height: 30px;
+}
+ul.list-unstyled.fw-normal.pb-0.small {
+  overflow: hidden;
+}
+/* .ms-5{
+  top: -20px;
+  height: 30px;
+}
+.ms-11.text-primary.text-sm.opacity-10 {
+  top: -20px;
+}
+.ms-12.text-primary.text-sm.opacity-10 {
+  right: -15px;
+  top: -12px;
+} */

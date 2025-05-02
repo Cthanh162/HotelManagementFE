@@ -1,0 +1,29 @@
+
+.create-form{
+    height: 100%;
+    background-color: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+form{
+    padding: 2em;
+    width:100%;
+    margin: auto;
+}
+.create-form .search #input{
+    width: 100%;
+}
+.card{
+    margin-top: 20px;
+}
+.card #list{
+    font-size: 13px;
+}
+.card #list #right{
+    text-align: center;
+}
+.card #list button{
+    margin: auto;
+} 
+
+

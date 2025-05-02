@@ -1,0 +1,52 @@
+p , span{
+    font-size: small;
+}
+th , td {
+    font-size: small;   
+}
+.search-form{
+    /* height: 100%; */
+    background-color: #fff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+form{
+    padding-top: 10px;
+    width: 95%;
+    margin: auto;
+}
+.search-user{
+    width: 47%;
+    float: left;
+}
+.search-name{
+    width: 47%;
+    float: right;
+}
+.search-department{
+    width: 47%;
+    float: left;
+}
+.search-status{
+    width: 47%;
+    float: right;
+}
+.card{
+    margin-top: 20px;
+}
+.card #list{
+    font-size: 13px;
+}
+.card #list #right{
+    text-align: center;
+}
+
+.action{
+    width: 5%;
+}
+
+.wrap-text{
+    white-space: normal !important; /* Cho phép văn bản xuống dòng */
+    /* word-wrap: break-word; Cho phép văn bản xuống dòng khi cần thiết */
+    /* word-break: break-all; Cho phép văn bản xuống dòng nếu không có dấu cách */
+}
