@@ -1,0 +1,9 @@
+.nav-item .btn {
+    box-shadow: none !important;
+    padding-bottom: 0 !important;
+    margin-left: 4px;
+}
+
+#components-collapse{
+    margin-left: 23px;
+}
