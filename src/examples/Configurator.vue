@@ -6,12 +6,12 @@ import { activateDarkMode, deactivateDarkMode } from "@/assets/js/dark-mode";
 const store = useStore();
 // state
 const isRTL = computed(() => store.state.isRTL);
-const isNavFixed = computed(() => store.state.isNavFixed);
+// const isNavFixed = computed(() => store.state.isNavFixed);
 const sidebarType = computed(() => store.state.sidebarType);
 const toggleConfigurator = () => store.commit("toggleConfigurator");
 
 // mutations
-const navbarFixed = () => store.commit("navbarFixed");
+// const navbarFixed = () => store.commit("navbarFixed");
 const setSidebarType = (type) => store.commit("sidebarType", type);
 
 const sidebarColor = (color = "success") => {
@@ -135,7 +135,7 @@ const darkMode = () => {
         </p>
         <!-- Navbar Fixed -->
         <!-- Navbar Fixed -->
-        <div class="mt-3 d-flex">
+        <!-- <div class="mt-3 d-flex">
           <h6 class="mb-0">Navbar Fixed</h6>
           <div class="form-check form-switch ps-0 ms-auto my-auto">
             <input
@@ -147,7 +147,7 @@ const darkMode = () => {
               @click="navbarFixed"
             />
           </div>
-        </div>
+        </div> -->
 
         <hr class="horizontal dark my-4" />
         <div class="mt-2 mb-5 d-flex">
