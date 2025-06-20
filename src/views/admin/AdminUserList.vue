@@ -4,7 +4,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-success" @click="openCreateForm">Thêm mới</button>
-      <input type="text" v-model="searchQuery" placeholder="Search..." class="form-control w-auto" />
+      <input type="text" v-model="searchQuery" placeholder="Tìm theo tên, email, sđt, địa chỉ..." class="form-control w-auto" />
     </div>
 
     <div class="mb-3">
@@ -83,7 +83,7 @@
                 <label class="form-label">Email</label>
                 <input class="form-control" v-model="form.email" />
               </div>
-              
+
               <div class="col-md-6">
                 <label class="form-label">Số điện thoại</label>
                 <input class="form-control" v-model="form.phone" />
@@ -136,10 +136,12 @@ onMounted(() => {
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value;
+  const keyword = searchQuery.value.toLowerCase();
   return users.value.filter(u =>
-    u.fullName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    u.username?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    u.userName?.toLowerCase().includes(keyword) ||
+    u.email?.toLowerCase().includes(keyword) ||
+    u.phone?.toLowerCase().includes(keyword) ||
+    u.address?.toLowerCase().includes(keyword)
   );
 });
 
@@ -208,4 +210,4 @@ function refreshUsers() {
   axios.get('/users')
     .then(res => users.value = res.data.data || []);
 }
-</script>3
+</script>

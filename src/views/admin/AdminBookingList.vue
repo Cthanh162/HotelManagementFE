@@ -89,15 +89,41 @@ onMounted(() => {
       console.error('Lỗi khi tải danh sách bookings:', err);
     });
 });
-
 const filteredBookings = computed(() => {
   if (!searchQuery.value) return bookings.value;
-  return bookings.value.filter(b =>
-    b.Name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    b.room?.roomName?.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-});
+  const q = searchQuery.value.toLowerCase();
 
+  return bookings.value.filter(b => {
+    return (
+      b.Name?.toLowerCase().includes(q) ||
+      b.phone?.toLowerCase().includes(q) ||
+      b.cccd?.toLowerCase().includes(q) ||
+      b.room?.roomName?.toLowerCase().includes(q) ||
+      formatDate(b.checkinTime).includes(q) ||
+      formatDate(b.checkoutTime).includes(q) ||
+      translateStatus(b.status).toLowerCase().includes(q) ||
+      translatePayment(b.paymentStatus).toLowerCase().includes(q)
+    );
+  });
+});
+function translateStatus(status) {
+  switch (status) {
+    case 'pending_payment': return 'Chờ xác nhận';
+    case 'confirmed': return 'Đã xác nhận';
+    case 'cancelled': return 'Đã huỷ';
+    case 'completed': return 'Đã trả phòng';
+    default: return '';
+  }
+}
+
+function translatePayment(status) {
+  switch (status) {
+    case 'pending_approval': return 'Đã thanh toán';
+    case 'pending': return 'Chưa thanh toán';
+    case 'timeout': return 'Hết thời gian';
+    default: return '';
+  }
+}
 const totalPages = computed(() =>
   Math.ceil(filteredBookings.value.length / entriesPerPage.value)
 );

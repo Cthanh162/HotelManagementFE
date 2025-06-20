@@ -11,6 +11,7 @@
         <li><router-link to="/admin/floors" exact-active-class="active">Quản lý Tầng</router-link></li>
         <li><router-link to="/admin/user" exact-active-class="active">Quản lý thông tin khách hàng</router-link></li>
         <li><router-link to="/admin/reviews" exact-active-class="active">Đánh giá</router-link></li>
+        <li><router-link to="/admin/services" exact-active-class="active">Quản lý dịch vụ</router-link></li>
       </ul>
     </aside>
     <main class="main-content">

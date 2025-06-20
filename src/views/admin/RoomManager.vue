@@ -1,7 +1,10 @@
 <template>
   <div>
     <h2>Danh sách phòng</h2>
-    <button @click="openAddModal" class="btn btn-success mb-3">Thêm mới</button>
+    <div class="d-flex justify-content-between mb-3">
+      <button @click="openAddModal" class="btn btn-success">Thêm mới</button>
+      <input v-model="searchQuery" type="text" class="form-control form-control-sm w-auto" placeholder="Tìm kiếm phòng..." />
+    </div>
 
     <div class="table-responsive">
       <table class="table table-bordered">
@@ -20,16 +23,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(room, index) in rooms" :key="room.roomId">
+          <tr v-for="(room, index) in filteredRooms" :key="room.roomId">
             <td>{{ index + 1 }}</td>
             <td>{{ room.roomName }}</td>
             <td>
-              <img
-                v-if="room.roomImages?.length"
-                :src="room.roomImages[0]?.url || room.roomImages[0]"
-                alt="room"
-                width="80"
-              />
+              <img v-if="room.roomImages?.length" :src="room.roomImages[0]?.url || room.roomImages[0]" width="80" />
             </td>
             <td>
               <button v-if="room.roomVideo" @click="viewVideo(room.roomVideo)" class="btn btn-sm btn-outline-primary">Xem video</button>
@@ -47,35 +45,60 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Modal xem chi tiết -->
+    <!-- Modal chi tiết -->
+    
+ <!-- Modal Chi tiết -->
     <div v-if="selectedRoom" class="modal" @click.self="selectedRoom = null">
-      <div class="modal-content">
+      <div class="modal-content modal-scrollable">
         <h3>{{ selectedRoom.roomName }}</h3>
-        <p>{{ selectedRoom.description }}</p>
+        <p><strong>Loại phòng:</strong> {{ selectedRoom.roomType }}</p>
+        <p><strong>Sức chứa:</strong> {{ selectedRoom.capacity }} người</p>
+        <p><strong>Người lớn:</strong> {{ selectedRoom.adults }} - <strong>Trẻ em:</strong> {{ selectedRoom.children }}</p>
+        <p><strong>Giá:</strong> {{ Number(selectedRoom.price).toLocaleString() }} VND</p>
+        <p><strong>Mô tả:</strong> {{ selectedRoom.description }}</p>
+
+        <div v-if="selectedRoom.services?.length">
+          <p><strong>Dịch vụ / Tiện nghi:</strong></p>
+          <ul>
+            <li v-for="s in selectedRoom.services" :key="s.id">
+              {{ s.name }} - {{ s.price ? Number(s.price).toLocaleString() + ' đ' : 'Miễn phí' }}
+            </li>
+          </ul>
+        </div>
+
         <div v-if="selectedRoom.roomImages?.length">
-          <div class="carousel">
-            <img v-for="(img, i) in selectedRoom.roomImages" :key="i" :src="img.url || img" :alt="selectedRoom.roomName" width="100%" />
+          <p><strong>Hình ảnh:</strong></p>
+          <div class="d-flex flex-wrap gap-2">
+            <img
+              v-for="(img, i) in selectedRoom.roomImages"
+              :key="i"
+              :src="img.url || img"
+              @click="zoomImage(img.url || img)"
+              width="100"
+              height="80"
+              class="rounded shadow-sm"
+              style="cursor: pointer;"
+            />
           </div>
         </div>
-        <video v-if="selectedRoom.roomVideo" controls width="100%">
-          <source :src="selectedRoom.roomVideo" type="video/mp4" />
-        </video>
-        <button @click="selectedRoom = null" class="btn btn-secondary mt-2">Đóng</button>
+
+        <div v-if="selectedRoom.roomVideo" class="mt-3">
+          <p><strong>Video:</strong></p>
+          <video controls width="100%">
+            <source :src="selectedRoom.roomVideo" type="video/mp4" />
+          </video>
+        </div>
+
+        <button @click="selectedRoom = null" class="btn btn-secondary mt-3">Đóng</button>
       </div>
     </div>
 
-    <!-- Modal xem video riêng -->
-    <div v-if="videoToView" class="modal" @click.self="videoToView = null">
-      <div class="modal-content">
-        <video controls width="100%">
-          <source :src="videoToView" type="video/mp4" />
-        </video>
-        <button @click="videoToView = null" class="btn btn-secondary mt-2">Đóng</button>
-      </div>
+    <!-- Modal Zoom Ảnh -->
+    <div v-if="zoomedImage" class="image-modal" @click.self="zoomedImage = null">
+      <img :src="zoomedImage" class="zoomed-img" />
     </div>
-
-    <!-- Modal thêm/sửa phòng -->
+  </div>  
+    <!-- Modal Thêm/Sửa phòng -->
     <div v-if="showForm" class="modal" @click.self="closeForm">
       <div class="modal-content modal-scrollable">
         <h3>{{ editingRoom ? 'Sửa phòng' : 'Thêm phòng' }}</h3>
@@ -104,7 +127,7 @@
             <select v-model="form.roomType" class="form-control" required>
               <option value="Deluxe">Deluxe</option>
               <option value="Standard">Standard</option>
-              <option value="Luxury'">Luxury</option>
+              <option value="Luxury">Luxury</option>
             </select>
           </div>
           <div class="form-group">
@@ -127,41 +150,46 @@
             <label>Mô tả:</label>
             <textarea v-model="form.description" class="form-control" rows="5"></textarea>
           </div>
-          <div v-if="editingRoom?.roomImages?.length">
-            <p>Ảnh hiện tại:</p>
-            <img v-for="(img, i) in editingRoom.roomImages" :key="i" :src="img.url || img" width="100" class="me-2 mb-2" />
-          </div>
+
           <div class="form-group">
-            <label>Ảnh phòng (mới):</label>
-            <input type="file" multiple @change="handleImageUpload" class="form-control" accept="image/jpeg,image/png,image/jpg" />
+            <label>Dịch vụ / Tiện nghi:</label>
+            <div class="form-check" v-for="s in services" :key="s.id">
+              <input class="form-check-input" type="checkbox" :value="s.id" v-model="form.services" :id="`service-${s.id}`" />
+              <label class="form-check-label" :for="`service-${s.id}`">
+                {{ s.name }} - {{ s.price ? Number(s.price).toLocaleString() + ' đ' : 'Miễn phí' }}
+              </label>
+            </div>
           </div>
-          <div v-if="editingRoom?.roomVideo">
-            <p>Video hiện tại:</p>
-            <video :src="editingRoom.roomVideo" controls width="100%" class="mb-2" />
-          </div>
+
           <div class="form-group">
-            <label>Video (mới):</label>
-            <input type="file" @change="handleVideoUpload" class="form-control" accept="video/mp4,video/avi,video/mov" />
+            <label>Ảnh phòng:</label>
+            <input type="file" multiple @change="handleImageUpload" class="form-control" accept="image/*" />
           </div>
-          <button type="submit" class="btn btn-success mt-2" :disabled="isSubmitting">Lưu</button>
-          <button @click.prevent="closeForm" class="btn btn-secondary mt-2">Huỷ</button>
+
+          <div class="form-group">
+            <label>Video phòng:</label>
+            <input type="file" @change="handleVideoUpload" class="form-control" accept="video/*" />
+          </div>
+
+          <button type="submit" class="btn btn-success mt-2">Lưu</button>
+          <button type="button" @click="closeForm" class="btn btn-secondary mt-2">Huỷ</button>
         </form>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue';
 import axios from '@/config';
-import { onMounted, ref } from 'vue';
 
 const rooms = ref([]);
+const services = ref([]);
 const floors = ref([]);
-const selectedRoom = ref(null);
-const videoToView = ref(null);
 const showForm = ref(false);
 const editingRoom = ref(null);
-const isSubmitting = ref(false);
+const selectedRoom = ref(null);
+const videoToView = ref(null);
+const searchQuery = ref('');
 
 const form = ref({
   hotelId: 1,
@@ -174,50 +202,35 @@ const form = ref({
   children: 0,
   price: 0,
   description: '',
+  services: [],
+  imageFiles: [],
   videoFile: null,
-  imageFiles: []
 });
 
 onMounted(() => {
   fetchRooms();
-  axios.get('/floors?hotelId=1').then(res => {
-    floors.value = res.data.data;
-  });
+  axios.get('/floors?hotelId=1').then(res => floors.value = res.data.data);
+  axios.get('/services').then(res => services.value = res.data.data);
+});
+
+const filteredRooms = computed(() => {
+  if (!searchQuery.value) return rooms.value;
+  return rooms.value.filter(r =>
+    r.roomName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    r.roomType?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    r.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
 });
 
 function fetchRooms() {
-  axios.get('/rooms')
-    .then(res => {
-      rooms.value = res.data.data;
-    })
-    .catch(err => {
-      console.error('Lỗi khi tải danh sách phòng:', err);
-    });
-}
-
-function viewRoom(room) {
-  selectedRoom.value = room;
-}
-
-function viewVideo(videoUrl) {
-  videoToView.value = videoUrl;
+  axios.get('/rooms').then(res => rooms.value = res.data.data);
 }
 
 function openAddModal() {
   editingRoom.value = null;
   form.value = {
-    hotelId: 1,
-    floorId: '',
-    roomName: '',
-    status: 'available',
-    roomType: '',
-    capacity: 1,
-    adults: 0,
-    children: 0,
-    price: 0,
-    description: '',
-    videoFile: null,
-    imageFiles: []
+    hotelId: 1, floorId: '', roomName: '', status: 'available', roomType: '',
+    capacity: 1, adults: 0, children: 0, price: 0, description: '', services: [], imageFiles: [], videoFile: null
   };
   showForm.value = true;
 }
@@ -225,18 +238,10 @@ function openAddModal() {
 function editRoom(room) {
   editingRoom.value = room;
   form.value = {
-    hotelId: room.hotelId,
-    floorId: room.floorId,
-    roomName: room.roomName,
-    status: room.status || 'available',
-    roomType: room.roomType,
-    capacity: room.capacity,
-    adults: room.adults,
-    children: room.children,
-    price: room.price,
-    description: room.description,
-    videoFile: null,
-    imageFiles: []
+    hotelId: room.hotelId, floorId: room.floorId, roomName: room.roomName, status: room.status,
+    roomType: room.roomType, capacity: room.capacity, adults: room.adults, children: room.children,
+    price: room.price, description: room.description || '', services: room.services?.map(s => s.id) || [],
+    imageFiles: [], videoFile: null
   };
   showForm.value = true;
 }
@@ -245,152 +250,59 @@ function closeForm() {
   showForm.value = false;
 }
 
-function handleVideoUpload(e) {
-  const file = e.target.files[0];
-  if (file && ['video/mp4', 'video/avi', 'video/mov'].includes(file.type)) {
-    form.value.videoFile = file;
-  } else {
-    alert('Vui lòng chọn file video hợp lệ (mp4, avi, mov)');
-    e.target.value = '';
-  }
+function handleImageUpload(e) {
+  form.value.imageFiles = Array.from(e.target.files);
 }
 
-function handleImageUpload(e) {
-  const files = Array.from(e.target.files);
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-  const validFiles = files.filter(file => validTypes.includes(file.type));
-  if (validFiles.length < files.length) {
-    alert('Chỉ chấp nhận file ảnh định dạng jpeg, png, jpg');
-  }
-  form.value.imageFiles = validFiles;
-  if (!validFiles.length) {
-    e.target.value = '';
-  }
+function handleVideoUpload(e) {
+  form.value.videoFile = e.target.files[0];
 }
 
 async function submitForm() {
-  // Validation trước khi gửi
-  if (!form.value.floorId) {
-    alert('Vui lòng chọn tầng');
-    return;
-  }
-  if (!form.value.roomName.trim()) {
-    alert('Vui lòng nhập tên phòng');
-    return;
-  }
-  if (!form.value.roomType) {
-    alert('Vui lòng chọn loại phòng');
-    return;
-  }
-  if (form.value.capacity < 1) {
-    alert('Sức chứa phải lớn hơn 0');
-    return;
-  }
-  if (form.value.adults < 0 || form.value.children < 0) {
-    alert('Số người lớn và trẻ em không được âm');
-    return;
-  }
-  if (form.value.price <= 0) {
-    alert('Giá phòng phải lớn hơn 0');
-    return;
-  }
-
-  isSubmitting.value = true;
-  try {
-    const formData = new FormData();
-    formData.append('hotelId', form.value.hotelId);
-    formData.append('floorId', form.value.floorId);
-    formData.append('roomName', form.value.roomName);
-    formData.append('status', form.value.status);
-    formData.append('roomType', form.value.roomType);
-    formData.append('capacity', form.value.capacity);
-    formData.append('adults', form.value.adults);
-    formData.append('children', form.value.children);
-    formData.append('price', form.value.price);
-    formData.append('description', form.value.description || '');
-
-    if (form.value.videoFile) {
+  const formData = new FormData();
+  for (const key in form.value) {
+    if (key === 'imageFiles') {
+      form.value.imageFiles.forEach(f => formData.append('roomImages[]', f));
+    } else if (key === 'services') {
+      form.value.services.forEach(id => formData.append('services[]', id));
+    } else if (key === 'videoFile' && form.value.videoFile) {
       formData.append('roomVideo', form.value.videoFile);
-    }
-    form.value.imageFiles.forEach(file => {
-      formData.append('roomImages[]', file);
-    });
-
-    // Log FormData để debug
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1]}`);
-    }
-
-    if (editingRoom.value) {
-      await axios.post(`/rooms/${editingRoom.value.roomId}?_method=PUT`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      alert('Cập nhật phòng thành công');
     } else {
-      await axios.post('/rooms', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      alert('Tạo phòng thành công');
+      formData.append(key, form.value[key]);
     }
-
-    fetchRooms();
-    closeForm();
-  } catch (err) {
-    console.error('Lỗi khi lưu phòng:', err);
-    if (err.response && err.response.status === 422) {
-      alert('Dữ liệu không hợp lệ: ' + JSON.stringify(err.response.data.errors, null, 2));
-    } else if (err.response && err.response.status === 404) {
-      alert('Không tìm thấy phòng');
-    } else {
-      alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
-  } finally {
-    isSubmitting.value = false;
   }
+
+  const url = editingRoom.value ? `/rooms/${editingRoom.value.roomId}?_method=PUT` : '/rooms';
+  await axios.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+  fetchRooms();
+  closeForm();
 }
-async function deleteRoom(id) {
-  try {
-    await axios.delete(`/rooms/${id}`);
-    // alert('Xoá phòng thành công');
-    fetchRooms();
-  } catch (error) {
-    console.error('Lỗi khi xoá phòng:', error);
-    alert('Lỗi khi xoá phòng');
-  }
+
+function deleteRoom(id) {
+  axios.delete(`/rooms/${id}`).then(() => fetchRooms());
+}
+
+function viewRoom(room) {
+  selectedRoom.value = room;
+}
+
+function viewVideo(url) {
+  videoToView.value = url;
 }
 </script>
 
 <style scoped>
 .modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  overflow: auto;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; overflow: auto;
 }
 .modal-content {
-  background: white;
-  padding: 2rem;
-  max-width: 600px;
-  width: 100%;
-  border-radius: 5px;
+  background: white; padding: 2rem;
+  max-width: 600px; width: 100%; border-radius: 5px;
 }
 .modal-scrollable {
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.carousel img {
-  margin-bottom: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.table-responsive {
-  overflow-x: auto;
+  max-height: 90vh; overflow-y: auto;
 }
 </style>
