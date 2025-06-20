@@ -4,12 +4,13 @@
     <div class="banner">
       <div class="banner-overlay container">
         <h1 class="banner-title">
-          Chào mừng bạn đến với <span class="highlight">CHITHANHHOTEL</span>
+          <span class="text-light">Chào mừng bạn đến với</span>
+          <span class="highlight">CHITHANHHOTEL</span>
         </h1>
         <p class="banner-subtitle">Dịch vụ cho thuê phòng khách sạn sang trọng</p>
 
         <!-- Search Bar -->
-        <div class="search-bar row g-2">
+        <div class="search-bar row g-2 mt-4">
           <div class="col-md-3">
             <input type="text" v-model="searchQuery" class="form-control" placeholder="Từ khoá tìm kiếm" />
           </div>
@@ -18,7 +19,7 @@
               <option value="">Chọn loại phòng</option>
               <option value="Standard">Standard</option>
               <option value="Deluxe">Deluxe</option>
-              <option value="Suite">Suite</option>
+              <option value="Suite">Luxury</option>
             </select>
           </div>
           <div class="col-md-2">
@@ -41,7 +42,7 @@
             </select>
           </div>
           <div class="col-md-1 text-end">
-            <button class="btn btn-danger px-4" @click="showSearchResults = true">Tìm kiếm</button>
+            <button class="btn btn-danger w-100" @click="handleSearch">Tìm kiếm</button>
           </div>
         </div>
       </div>
@@ -52,43 +53,12 @@
       <section v-if="showSearchResults && filteredRooms.length > 0" class="rooms-section">
         <h2>Kết quả tìm kiếm</h2>
         <div class="room-grid">
-          <div class="room-card" v-for="room in paginatedRooms" :key="room.roomId">
+          <div class="room-card" v-for="room in filteredRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
-            <div class="rating">★★★★☆ {{ room.viewCount || 0 }} lượt xem</div>
-            <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
-            <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
-          </div>
-        </div>
-
-        <div class="text-center mt-3">
-          <button class="btn btn-outline-primary me-2" :disabled="searchPage <= 1" @click="searchPage--">←</button>
-          <button class="btn btn-outline-primary" :disabled="searchPage >= totalPages" @click="searchPage++">→</button>
-        </div>
-      </section>
-
-      <!-- Phòng nổi bật -->
-     <section class="rooms-section">
-        <h2>Phòng có lượt xem nhiều</h2>
-        <div class="room-grid">
-          <div class="room-card" v-for="room in popularRooms" :key="room.roomId">
-            <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
-            <h3>{{ room.roomName }}</h3>
-            <div class="rating">★★★★☆ {{ room.viewCount || 0 }} lượt xem</div>
-            <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
-            <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
-          </div>
-        </div>
-      </section>
-
-      <!-- Phòng giá rẻ -->
-      <section class="rooms-section">
-        <h2>Phòng giá rẻ</h2>
-        <div class="room-grid">
-          <div class="room-card" v-for="room in discountRooms" :key="room.roomId">
-            <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
-            <h3>{{ room.roomName }}</h3>
-            <div class="rating">★★★★☆ {{ room.viewCount || 0 }} lượt xem</div>
+             <div class="rating">
+              <span v-html="renderStars(room.reviews_avg_rating)"></span>
+            </div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
@@ -102,7 +72,7 @@
           <div class="room-card" v-for="room in mostBookedRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
-            <div class="rating">★★★★☆ {{ room.bookings_count || 0 }} lượt đặt</div>
+            <div class="rating">{{ room.bookings_count || 0 }} lượt đặt</div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
@@ -116,7 +86,9 @@
           <div class="room-card" v-for="room in topRatedRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
-            <div class="rating">★★★★★ {{ room.reviews_avg_rating?.toFixed(1) || 0 }}/5</div>
+            <div class="rating">
+              <span v-html="renderStars(room.reviews_avg_rating)"></span>
+            </div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
@@ -127,18 +99,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from '@/config';
 
-const allRooms = ref([]);
-const popularRooms = ref([]);
-const discountRooms = ref([]);
+// const allRooms = ref([]);
 const mostBookedRooms = ref([]);
 const topRatedRooms = ref([]);
+const filteredRooms = ref([]);
 const searchQuery = ref('');
 const showSearchResults = ref(false);
-const searchPage = ref(1);
-const perPage = 3;
 
 const filters = ref({
   roomType: '',
@@ -147,66 +116,75 @@ const filters = ref({
   maxPrice: ''
 });
 
+function renderStars(rating) {
+  if (!rating) return '☆☆☆☆☆';
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+}
+
+function handleSearch() {
+  axios.get('/rooms/search', {
+    params: {
+      q: searchQuery.value,
+      roomType: filters.value.roomType,
+      capacity: filters.value.capacity,
+      minPrice: filters.value.minPrice,
+      maxPrice: filters.value.maxPrice,
+    }
+  }).then(res => {
+    filteredRooms.value = res.data.data || [];
+    showSearchResults.value = true;
+  }).catch(err => {
+    console.error('Lỗi khi tìm kiếm:', err);
+  });
+}
+
 onMounted(async () => {
   try {
-    const [roomsRes, mostBookedRes, topRatedRes] = await Promise.all([
-      axios.get('/rooms'),
+    const [mostBookedRes, topRatedRes] = await Promise.all([
       axios.get('/rooms/most-booked'),
       axios.get('/rooms/top-rated')
     ]);
 
-    const rooms = roomsRes.data?.data || [];
-    allRooms.value = rooms;
-    popularRooms.value = [...rooms].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 3);
-    discountRooms.value = [...rooms].sort((a, b) => a.price - b.price).slice(0, 3);
     mostBookedRooms.value = mostBookedRes.data?.data || [];
     topRatedRooms.value = topRatedRes.data?.data || [];
   } catch (err) {
     console.error('Lỗi khi tải danh sách phòng:', err);
   }
 });
-
-const filteredRooms = computed(() => {
-  return allRooms.value.filter(room => {
-    if (!room) return false;
-    if (searchQuery.value && !room.roomName?.toLowerCase().includes(searchQuery.value.toLowerCase())) return false;
-    if (filters.value.roomType && room.roomType !== filters.value.roomType) return false;
-    if (filters.value.capacity && room.capacity !== Number(filters.value.capacity)) return false;
-    if (filters.value.minPrice && Number(room.price) < filters.value.minPrice) return false;
-    if (filters.value.maxPrice && Number(room.price) > filters.value.maxPrice) return false;
-    return true;
-  });
-});
-
-const totalPages = computed(() => Math.ceil(filteredRooms.value.length / perPage));
-
-const paginatedRooms = computed(() => {
-  const start = (searchPage.value - 1) * perPage;
-  return filteredRooms.value.slice(start, start + perPage);
-});
 </script>
 
 <style scoped>
 .banner {
-  background: url('https://via.placeholder.com/1600x500') no-repeat center center/cover;
+  background: url('@/assets/header.jpeg') no-repeat center center/cover;
   color: white;
-  padding: 6rem 2rem 3rem;
+  padding: 10rem 2rem 5rem;
   margin-bottom: 2rem;
   position: relative;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .banner-overlay {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   padding: 2rem;
   border-radius: 12px;
+  width: 100%;
 }
 .banner-title {
   font-size: 2.8rem;
+  font-weight: bold;
 }
 .highlight {
-  color: #ffcc00;
+  color: #ffc107;
+  font-weight: 800;
 }
 .banner-subtitle {
   font-size: 1.2rem;
+  color: #f8f9fa;
 }
 .home-container {
   max-width: 1200px;
@@ -245,7 +223,7 @@ const paginatedRooms = computed(() => {
   color: #333;
 }
 .rating {
-  color: #ff4d4d;
+  color: #ffc107;
   margin: 0.5rem;
   font-size: 0.9rem;
 }

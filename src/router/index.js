@@ -43,6 +43,8 @@ const routes = [
   children: [
     { path: "rooms", name: "RoomManager", component: () => import("@/views/admin/RoomManager.vue") },
     { path: 'floors', name: 'FloorManager', component: () => import('@/views/admin/FloorManager.vue') },
+    { path: 'services', name: 'ServiceManager', component: () => import('@/views/admin/ServiceManager.vue') },
+
     { path: 'bookings', name: 'BookingManager', component: () => import('@/views/admin/AdminBookingList.vue') },
     { path: 'bookings/:id', name: 'AdminBookingDetail', component: () => import('@/views/admin/AdminBookingDetail.vue') },
     { path: 'bookings/:id/edit', name: 'AdminBookingEdit', component: () => import('@/views/admin/AdminBookingEdit.vue') },
