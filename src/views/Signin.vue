@@ -1,10 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onBeforeMount } from "vue";
 import { useStore } from "vuex";
-import Navbar from "@/examples/PageLayout/Navbar.vue";
-import ArgonInput from "@/components/ArgonInput.vue";
-import ArgonSwitch from "@/components/ArgonSwitch.vue";
-import ArgonButton from "@/components/ArgonButton.vue";
+import SignInForm from "../components/Auth/SignInForm.vue";
 const body = document.getElementsByTagName("body")[0];
 
 const store = useStore();
@@ -23,6 +20,7 @@ onBeforeUnmount(() => {
   body.classList.add("bg-gray-100");
 });
 </script>
+
 <template>
   <div class="container top-0 position-sticky z-index-sticky">
     <div class="row">
@@ -45,52 +43,19 @@ onBeforeUnmount(() => {
             >
               <div class="card card-plain">
                 <div class="pb-0 card-header text-start">
-                  <h4 class="font-weight-bolder">Sign In</h4>
-                  <p class="mb-0">Enter your email and password to sign in</p>
+                  <h4 class="font-weight-bolder">Đăng nhập</h4>
+                  <p class="mb-0">Nhập email và mật khẩu để đăng nhập</p>
                 </div>
                 <div class="card-body">
-                  <form role="form">
-                    <div class="mb-3">
-                      <argon-input
-                        id="email"
-                        type="email"
-                        placeholder="Email"
-                        name="email"
-                        size="lg"
-                      />
-                    </div>
-                    <div class="mb-3">
-                      <argon-input
-                        id="password"
-                        type="password"
-                        placeholder="Password"
-                        name="password"
-                        size="lg"
-                      />
-                    </div>
-                    <argon-switch id="rememberMe" name="remember-me"
-                      >Remember me</argon-switch
-                    >
-
-                    <div class="text-center">
-                      <argon-button
-                        class="mt-4"
-                        variant="gradient"
-                        color="success"
-                        fullWidth
-                        size="lg"
-                        >Sign in</argon-button
-                      >
-                    </div>
-                  </form>
+                  <sign-in-form />
                 </div>
                 <div class="px-1 pt-0 text-center card-footer px-lg-2">
                   <p class="mx-auto mb-4 text-sm">
-                    Don't have an account?
-                    <a
-                      href="javascript:;"
+                    Bạn chưa có tài khoản?
+                    <router-link
+                      to="/signup"
                       class="text-success text-gradient font-weight-bold"
-                      >Sign up</a
+                      >Đăng ký</router-link
                     >
                   </p>
                 </div>
@@ -102,7 +67,7 @@ onBeforeUnmount(() => {
               <div
                 class="position-relative bg-gradient-primary h-100 m-3 px-7 border-radius-lg d-flex flex-column justify-content-center overflow-hidden"
                 style="
-                  background-image: url(&quot;https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signin-ill.jpg&quot;);
+                  background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signin-ill.jpg');
                   background-size: cover;
                 "
               >

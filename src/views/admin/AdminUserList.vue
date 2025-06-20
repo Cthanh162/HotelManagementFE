@@ -1,0 +1,211 @@
+<template>
+  <div class="container py-4">
+    <h4 class="mb-3">Danh sách khách hàng</h4>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <button class="btn btn-success" @click="openCreateForm">Thêm mới</button>
+      <input type="text" v-model="searchQuery" placeholder="Search..." class="form-control w-auto" />
+    </div>
+
+    <div class="mb-3">
+      <label>
+        <select v-model="entriesPerPage" class="form-select form-select-sm w-auto d-inline-block">
+          <option value="5">5 entries per page</option>
+          <option value="10">10 entries per page</option>
+          <option value="20">20 entries per page</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light text-center">
+          <tr>
+            <th>STT</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Số điện thoại</th>
+            <th>Địa chỉ</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(user, index) in paginatedUsers" :key="user.userId">
+            <td class="text-center">{{ index + 1 + (currentPage - 1) * entriesPerPage }}</td>
+            <td>{{ user.userName }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.phone }}</td>
+            <td>{{ user.address }}</td>
+            <td class="text-center">
+              <button class="btn btn-primary btn-sm me-1" @click="openEditForm(user)">Sửa</button>
+              <button class="btn btn-danger btn-sm" @click="deleteUser(user.userId)">Xóa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav>
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a class="page-link" href="#" @click.prevent="currentPage--">Trước</a>
+        </li>
+        <li
+          class="page-item"
+          v-for="page in totalPages"
+          :key="page"
+          :class="{ active: currentPage === page }"
+        >
+          <a class="page-link" href="#" @click.prevent="currentPage = page">{{ page }}</a>
+        </li>
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+          <a class="page-link" href="#" @click.prevent="currentPage++">Sau</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Modal Form -->
+    <div v-if="showModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.3);">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ isEdit ? 'Cập nhật người dùng' : 'Thêm mới người dùng' }}</h5>
+            <button class="btn-close" @click="closeModal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Họ tên</label>
+                <input class="form-control" v-model="form.userName" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" v-model="form.email" />
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label">Số điện thoại</label>
+                <input class="form-control" v-model="form.phone" />
+              </div>
+
+              <div class="col-md-6" v-if="!isEdit">
+                <label class="form-label">Mật khẩu</label>
+                <input class="form-control" v-model="form.password" type="password" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Địa chỉ</label>
+                <input class="form-control" v-model="form.address" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeModal">Đóng</button>
+            <button class="btn btn-primary" @click="submitForm">Lưu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import axios from '@/config';
+
+const users = ref([]);
+const entriesPerPage = ref(10);
+const currentPage = ref(1);
+const searchQuery = ref('');
+const showModal = ref(false);
+const isEdit = ref(false);
+const form = ref({
+  userId: null,
+  userName: '',
+  email: '',
+  phone: '',
+  password: '',
+  address: ''
+});
+
+onMounted(() => {
+  axios.get('/users')
+    .then(res => users.value = res.data.data || [])
+    .catch(err => console.error('Lỗi khi lấy danh sách user:', err));
+});
+
+const filteredUsers = computed(() => {
+  if (!searchQuery.value) return users.value;
+  return users.value.filter(u =>
+    u.fullName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    u.username?.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / entriesPerPage.value);
+});
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * entriesPerPage.value;
+  return filteredUsers.value.slice(start, start + entriesPerPage.value);
+});
+
+function openEditForm(user) {
+  isEdit.value = true;
+  form.value = { ...user };
+  showModal.value = true;
+}
+
+function openCreateForm() {
+  isEdit.value = false;
+  form.value = {
+    userId: null,
+    email: '',
+    phone: '',
+    userName: '',
+    password: '',
+    address: ''
+  };
+  showModal.value = true;
+}
+
+function closeModal() {
+  showModal.value = false;
+}
+
+function submitForm() {
+  if (isEdit.value) {
+    axios.put(`/users/${form.value.userId}`, form.value)
+      .then(() => {
+        closeModal();
+        refreshUsers();
+      });
+  } else {
+    axios.post('/users', form.value)
+      .then(() => {
+        closeModal();
+        refreshUsers();
+      });
+  }
+}
+
+function deleteUser(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
+  axios.delete(`/users/${id}`)
+    .then(() => {
+      users.value = users.value.filter(u => u.userId !== id);
+      alert('Xóa thành công');
+    })
+    .catch(err => {
+      console.error('Lỗi khi xóa:', err);
+      alert('Xóa thất bại');
+    });
+}
+
+function refreshUsers() {
+  axios.get('/users')
+    .then(res => users.value = res.data.data || []);
+}
+</script>3
