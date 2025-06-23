@@ -75,8 +75,28 @@
           <div v-if="rooms.length === 0" class="text-center text-muted">Không có phòng nào.</div>
         </div>
       </div>
+    </div> 
+  </div>
+  <!-- Footer -->
+<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
+  <div class="container">
+    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
+
+    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
+    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <span>Điện thoại: <strong>+84 965540033</strong></span>
+      <span>• Fax: <strong>+84 965540033</strong></span>
+      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
+    </div>
+
+    <div class="mt-3">
+      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
     </div>
   </div>
+</footer>
 </template>
 
 <script setup>
@@ -132,5 +152,9 @@ onMounted(() => {
 <style scoped>
 .object-fit-cover {
   object-fit: cover;
+}
+footer a:hover {
+  color: #007bff;
+  text-decoration: none;
 }
 </style>

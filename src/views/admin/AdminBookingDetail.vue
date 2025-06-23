@@ -35,6 +35,13 @@
         <router-link to="/admin/bookings" class="btn btn-secondary ms-2">
           Quay lại danh sách
         </router-link>
+        <button
+          v-if="booking.status === 'confirmed' && booking.paymentStatus === 'paid'"
+          @click="handleCheckout"
+          class="btn btn-success ms-2"
+        >
+          Checkout
+        </button>
       </div>
     </div>
     <div v-else class="text-center text-muted">Đang tải dữ liệu...</div>
@@ -62,6 +69,21 @@ function formatDate(val) {
 
 function formatCurrency(val) {
   return Number(val || 0).toLocaleString('vi-VN') + ' đ';
+}
+// const router = useRouter();
+
+function handleCheckout() {
+  if (!confirm('Xác nhận checkout đơn này?')) return;
+
+  axios.put(`/bookings/${booking.value.id}/checkout`)
+    .then(res => {
+      alert(res.data.message || 'Checkout thành công!');
+      booking.value.status = 'completed'; // Cập nhật trạng thái tại UI
+    })
+    .catch(err => {
+      const msg = err.response?.data?.message || 'Lỗi khi checkout.';
+      alert(msg);
+    });
 }
 </script>
 

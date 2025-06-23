@@ -1,18 +1,18 @@
 // src/views/admin/FloorManager.vue
 <template>
-  <div>
-    <h2>Quản lý tầng khách sạn</h2>
+  <div class="container py-4">
+    <h4 class="mt-3 mb-4">Quản lý tầng</h4>
     <button @click="openForm" class="btn btn-success mb-3">Thêm tầng</button>
 
-    <table class="table table-bordered">
-      <thead>
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light text-center">
         <tr>
-          <th>Stt</th>
+          <th>STT</th>
           <th>Tên tầng</th>
           <th>Thao tác</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody style="text-align: center;">
         <tr v-for="(floor, index) in floors" :key="floor.id">
           <td>{{ index + 1 }}</td>
           <td>{{ floor.floorName }}</td>
@@ -33,8 +33,10 @@
             <label>Tên tầng:</label>
             <input v-model="form.floorName" class="form-control" required />
           </div>
-          <button type="submit" class="btn btn-success mt-2">Lưu</button>
-          <button type="button" class="btn btn-secondary mt-2" @click="closeForm">Huỷ</button>
+          <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" @click="closeForm">Huỷ</button>
+          <button type="submit" class="btn btn-primary">Lưu</button>
+          </div>
         </form>
       </div>
     </div>

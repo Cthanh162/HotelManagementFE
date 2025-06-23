@@ -50,7 +50,6 @@
             Đến: {{ formatDate(booking.checkoutTime) }}
           </p>
           <p><strong>Tổng đơn:</strong> {{ formatCurrency(booking.totalPrice) }}</p>
-          <p><strong>Cọc:</strong> 20.000 đ</p>
         </div>
       </div>
     </div>
@@ -59,6 +58,26 @@
   <div v-else class="text-center py-5 text-muted">
     Đang tải thông tin đặt phòng...
   </div>
+   <!-- Footer -->
+<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
+  <div class="container">
+    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
+
+    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
+    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <span>Điện thoại: <strong>+84 965540033</strong></span>
+      <span>• Fax: <strong>+84 965540033</strong></span>
+      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
+    </div>
+
+    <div class="mt-3">
+      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
+    </div>
+  </div>
+</footer>
 </template>
 
 <script setup>
@@ -75,7 +94,7 @@ const booking = ref(null);
 const selectedFile = ref(null);
 const previewImage = ref(null);
 
-const countdown = ref('10:00');
+const countdown = ref('5:00');
 let timer = null;
 let secondsLeft = 600;
 
@@ -88,7 +107,7 @@ function startCountdown() {
 
     if (secondsLeft <= 0) {
       clearInterval(timer);
-      alert('Hết thời gian giữ chỗ. Bạn sẽ được chuyển về trang phòng.');
+      alert('Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
       if (booking.value?.roomId) {
         router.push(`/room/${booking.value.roomId}`);
       }
@@ -121,7 +140,7 @@ function confirmUpload() {
       alert('Tải ảnh thanh toán thành công');
       const roomId = booking.value?.roomId;
       if (roomId) {
-        router.push(`/room/${roomId}?review=1`);
+        router.push(`/room/${roomId}`);
       }
     })
     .catch(err => {

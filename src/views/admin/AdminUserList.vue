@@ -23,6 +23,7 @@
           <tr>
             <th>STT</th>
             <th>Họ tên</th>
+            <th>Tên tài khoản</th>
             <th>Email</th>
             <th>Số điện thoại</th>
             <th>Địa chỉ</th>
@@ -32,6 +33,7 @@
         <tbody>
           <tr v-for="(user, index) in paginatedUsers" :key="user.userId">
             <td class="text-center">{{ index + 1 + (currentPage - 1) * entriesPerPage }}</td>
+            <td>{{ user.fullName }}</td>
             <td>{{ user.userName }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.phone }}</td>
@@ -76,7 +78,7 @@
           <div class="modal-body">
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Họ tên</label>
+                <label class="form-label">Tên tài khoản</label>
                 <input class="form-control" v-model="form.userName" />
               </div>
               <div class="col-md-6">
@@ -100,7 +102,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeModal">Đóng</button>
+            <button class="btn btn-secondary" @click="closeModal">Huỷ</button>
             <button class="btn btn-primary" @click="submitForm">Lưu</button>
           </div>
         </div>

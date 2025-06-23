@@ -4,16 +4,24 @@
 
     <div class="d-flex justify-content-between mb-3">
       <div>
-        <button class="btn btn-dark me-2" @click="markAllAsRead">✔️ Đánh dấu tất cả đã đọc</button>
+        <button class="btn btn-sm btn-primary me-1" @click="markAllAsRead">✔️ Đánh dấu tất cả đã đọc</button>
         <button class="btn btn-danger" @click="deleteAll">🗑️ Xoá tất cả</button>
       </div>
+      <div class="mb-3 text-end">
+      <input
+        v-model="searchQuery"
+        type="text"
+        class="form-control w-auto d-inline-block"
+        placeholder="Tìm kiếm..."
+      />
+    </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered align-middle text-center">
-        <thead class="table-dark">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light text-center">
           <tr>
-            <th>#</th>
+            <th>STT</th>
             <th>Tên Phòng</th>
             <th>Tên Khách Hàng</th>
             <th>Đánh Giá</th>
@@ -23,7 +31,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(review, index) in reviews" :key="review.id">
+          <tr v-for="(review, index) in filteredReviews" :key="review.id">
             <td>{{ index + 1 }}</td>
             <td>{{ review.room?.roomName || '---' }}</td>
             <td>{{ review.user?.userName || '---' }}</td>
@@ -45,18 +53,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,computed } from 'vue';
 import axios from '@/config';
 
 const reviews = ref([]);
+const searchQuery = ref('');
 
 function loadReviews() {
   axios.get('/reviews')
-    .then(res => reviews.value = res.data.data)
+    .then(res => {reviews.value = res.data.data,console.log("hâhh",res.data.data)})
     .catch(err => {
       console.error('Lỗi khi tải reviews:', err);
       reviews.value = [];
     });
+    
 }
 
 function formatDate(dateStr) {
@@ -74,6 +84,18 @@ function deleteReview(id) {
     });
 }
 
+const filteredReviews = computed(() => {
+  if (!searchQuery.value) return reviews.value;
+  const q = searchQuery.value.toLowerCase();
+
+  return reviews.value.filter(b =>
+    b.room.roomName?.toLowerCase().includes(q) ||
+    b.user.userName?.includes(q) ||
+    String(b.rating)?.includes(q) ||
+    b.des?.toLowerCase().includes(q) ||
+    formatDate(b.createdAt).toLowerCase().includes(q)
+  );
+});
 function deleteAll() {
   if (!confirm('Bạn có chắc chắn muốn xoá TẤT CẢ đánh giá?')) return;
   Promise.all(reviews.value.map(r => axios.delete(`/reviews/${r.id}`)))

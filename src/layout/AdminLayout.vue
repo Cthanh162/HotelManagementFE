@@ -3,15 +3,16 @@
     <aside class="sidebar">
       <div class="sidebar-title">Quản trị</div>
       <ul>
-        <li><router-link to="/admin/dashboard" exact-active-class="active">Thống kê</router-link></li>
+        <li><router-link to="/admin/revenue" exact-active-class="active">Thống kê</router-link></li>
         <li><router-link to="/admin/rooms" exact-active-class="active">Quản lý phòng</router-link></li>
         <!-- <li><router-link to="/admin/floors" exact-active-class="active">Quản lý loại phòng</router-link></li> -->
-        <li><router-link to="/admin/bookings" exact-active-class="active">Quản lý booking</router-link></li>
+        <li><router-link to="/admin/bookings" exact-active-class="active">Quản lý đặt phòng</router-link></li>
         <li><router-link to="/admin/bookings/pending" exact-active-class="active">Danh sách chờ duyệt thanh toán</router-link></li>
         <li><router-link to="/admin/floors" exact-active-class="active">Quản lý Tầng</router-link></li>
         <li><router-link to="/admin/user" exact-active-class="active">Quản lý thông tin khách hàng</router-link></li>
-        <li><router-link to="/admin/reviews" exact-active-class="active">Đánh giá</router-link></li>
+        <li><router-link to="/admin/reviews" exact-active-class="active">Quản lý Đánh giá</router-link></li>
         <li><router-link to="/admin/services" exact-active-class="active">Quản lý dịch vụ</router-link></li>
+        <li><router-link to="/admin/roomType" exact-active-class="active">Quản lý loại phòng</router-link></li>
       </ul>
     </aside>
     <main class="main-content">

@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <h2>Danh sách phòng</h2>
-    <div class="d-flex justify-content-between mb-3">
+  <div class="container-fluid">
+    <h4 class="mt-3 mb-4">Danh sách phòng</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <button @click="openAddModal" class="btn btn-success">Thêm mới</button>
-      <input v-model="searchQuery" type="text" class="form-control form-control-sm w-auto" placeholder="Tìm kiếm phòng..." />
+      <input v-model="searchQuery" type="text" class="form-control search-input form-control-sm" placeholder="Tìm kiếm phòng..." />
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered">
-        <thead>
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light text-center">
           <tr>
             <th>STT</th>
             <th>Tên phòng</th>
@@ -32,15 +32,17 @@
             <td>
               <button v-if="room.roomVideo" @click="viewVideo(room.roomVideo)" class="btn btn-sm btn-outline-primary">Xem video</button>
             </td>
-            <td>{{ room.roomType }}</td>
+            <td>{{ room.roomType?.name }}</td>
             <td>{{ room.adults }}</td>
             <td>{{ room.children }}</td>
             <td>{{ Number(room.price).toLocaleString() }} VND</td>
             <td><a href="#" @click.prevent="viewRoom(room)">Xem</a></td>
-            <td>
-              <button @click="editRoom(room)" class="btn btn-primary btn-sm">Sửa</button>
-              <button @click="deleteRoom(room.roomId)" class="btn btn-danger btn-sm">Xoá</button>
-            </td>
+            <td class="text-center">
+  <div class="d-flex justify-content-center gap-1 align-items-center">
+    <button @click="editRoom(room)" class="btn btn-primary btn-sm nomargin">Sửa</button>
+    <button @click="deleteRoom(room.roomId)" class="btn btn-danger btn-sm nomargin">Xoá</button>
+  </div>
+</td>
           </tr>
         </tbody>
       </table>
@@ -51,7 +53,7 @@
     <div v-if="selectedRoom" class="modal" @click.self="selectedRoom = null">
       <div class="modal-content modal-scrollable">
         <h3>{{ selectedRoom.roomName }}</h3>
-        <p><strong>Loại phòng:</strong> {{ selectedRoom.roomType }}</p>
+        <p><strong>Loại phòng:</strong> {{ selectedRoom.roomType?.name }}</p>
         <p><strong>Sức chứa:</strong> {{ selectedRoom.capacity }} người</p>
         <p><strong>Người lớn:</strong> {{ selectedRoom.adults }} - <strong>Trẻ em:</strong> {{ selectedRoom.children }}</p>
         <p><strong>Giá:</strong> {{ Number(selectedRoom.price).toLocaleString() }} VND</p>
@@ -124,11 +126,12 @@
           </div>
           <div class="form-group">
             <label>Loại phòng:</label>
-            <select v-model="form.roomType" class="form-control" required>
-              <option value="Deluxe">Deluxe</option>
-              <option value="Standard">Standard</option>
-              <option value="Luxury">Luxury</option>
-            </select>
+            <select v-model="form.roomTypeId" class="form-control" required>
+            <option disabled value="">Chọn loại phòng</option>
+            <option v-for="type in roomTypes" :key="type.id" :value="type.id">
+              {{ type.name }}
+            </option>
+          </select>
           </div>
           <div class="form-group">
             <label>Sức chứa:</label>
@@ -170,9 +173,10 @@
             <label>Video phòng:</label>
             <input type="file" @change="handleVideoUpload" class="form-control" accept="video/*" />
           </div>
-
-          <button type="submit" class="btn btn-success mt-2">Lưu</button>
+           <div class="modal-footer">
           <button type="button" @click="closeForm" class="btn btn-secondary mt-2">Huỷ</button>
+          <button type="submit" class="btn btn-primary mt-2">Lưu</button>
+          </div>
         </form>
       </div>
     </div>
@@ -190,13 +194,13 @@ const editingRoom = ref(null);
 const selectedRoom = ref(null);
 const videoToView = ref(null);
 const searchQuery = ref('');
-
+const roomTypes = ref([]);
 const form = ref({
   hotelId: 1,
   floorId: '',
   roomName: '',
   status: 'available',
-  roomType: '',
+  roomTypeId: 0,
   capacity: 1,
   adults: 0,
   children: 0,
@@ -211,19 +215,20 @@ onMounted(() => {
   fetchRooms();
   axios.get('/floors?hotelId=1').then(res => floors.value = res.data.data);
   axios.get('/services').then(res => services.value = res.data.data);
+  axios.get('/room-types').then(res => roomTypes.value = res.data.data);
 });
 
 const filteredRooms = computed(() => {
   if (!searchQuery.value) return rooms.value;
   return rooms.value.filter(r =>
     r.roomName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    r.roomType?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    r.roomType?.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
     r.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
 function fetchRooms() {
-  axios.get('/rooms').then(res => rooms.value = res.data.data);
+  axios.get('/rooms/getAll').then(res => rooms.value = res.data.data);
 }
 
 function openAddModal() {
@@ -239,7 +244,7 @@ function editRoom(room) {
   editingRoom.value = room;
   form.value = {
     hotelId: room.hotelId, floorId: room.floorId, roomName: room.roomName, status: room.status,
-    roomType: room.roomType, capacity: room.capacity, adults: room.adults, children: room.children,
+    roomTypeId: room.roomType?.id, capacity: room.capacity, adults: room.adults, children: room.children,
     price: room.price, description: room.description || '', services: room.services?.map(s => s.id) || [],
     imageFiles: [], videoFile: null
   };
@@ -260,6 +265,16 @@ function handleVideoUpload(e) {
 
 async function submitForm() {
   const formData = new FormData();
+  // formData.append('hotelId', String(form.value.hotelId));
+  // formData.append('floorId', String(form.value.floorId));
+  // formData.append('roomName', String(form.value.roomName));
+  // formData.append('status', String(form.value.status));
+  // formData.append('roomTypeId', String(form.value.roomTypeId));
+  // formData.append('capacity', String(form.value.capacity));
+  // formData.append('adults', String(form.value.adults));
+  // formData.append('children', String(form.value.children));
+  // formData.append('price', String(form.value.price));
+  // formData.append('description', String(form.value.description || ''));
   for (const key in form.value) {
     if (key === 'imageFiles') {
       form.value.imageFiles.forEach(f => formData.append('roomImages[]', f));
@@ -271,9 +286,16 @@ async function submitForm() {
       formData.append(key, form.value[key]);
     }
   }
+for (let [key, value] of formData.entries()) {
+    console.log(`${key}: ${value}`);
+  }
+  const url = editingRoom.value ? `/rooms/${editingRoom.value.roomId}` : '/rooms';
+  const method = editingRoom.value ? axios.put : axios.post;
 
-  const url = editingRoom.value ? `/rooms/${editingRoom.value.roomId}?_method=PUT` : '/rooms';
-  await axios.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await method(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  // await axios.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
   fetchRooms();
   closeForm();
 }
@@ -292,6 +314,25 @@ function viewVideo(url) {
 </script>
 
 <style scoped>
+.container-fluid {
+  max-width: 100%;
+  /* padding: 0 1rem; */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+} 
+main{
+  padding:0 !important;
+}
+.nomargin{
+    margin-bottom:0 !important;
+}
+.search-input {
+  max-width: 220px;
+  min-width: 160px;
+}
+main .main-content{
+  padding: 0 !important;;
+}
 .modal {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -304,5 +345,14 @@ function viewVideo(url) {
 }
 .modal-scrollable {
   max-height: 90vh; overflow-y: auto;
+}
+</style>
+<style>
+.main-content {
+  padding: 10px !important;
+}
+.container-fluid {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
 }
 </style>
