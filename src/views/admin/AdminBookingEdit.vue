@@ -79,7 +79,12 @@ onMounted(() => {
 function updateBooking() {
   const token = localStorage.getItem('accessToken');
 
-  axios.put(`/bookings/${bookingId}`, booking.value, {
+  const payload = {
+    ...booking.value,
+    roomId: booking.value.room?.roomId || booking.value.roomId // đảm bảo có roomId
+  };
+
+  axios.put(`/bookings/${bookingId}`, payload, {
     headers: {
       Authorization: `Bearer ${token}`
     }

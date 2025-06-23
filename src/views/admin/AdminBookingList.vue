@@ -1,6 +1,6 @@
 <template>
   <div class="container py-4">
-    <h4 class="mb-4">Danh sách booking</h4>
+    <h4 class="mb-4">Danh sách đặt phòng</h4>
 
     <div class="d-flex justify-content-between mb-3">
       <div>
@@ -12,11 +12,11 @@
           </select>
         </label>
       </div>
-      <input v-model="searchQuery" type="text" class="form-control form-control-sm w-auto" placeholder="Search..." />
+      <input v-model="searchQuery" type="text" class="form-control form-control-sm w-auto" placeholder="Tìm kiếm..." />
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle">
+    <div >
+      <table class="table table-bordered table-hover align-middle text-center w-100">
         <thead class="table-light text-center">
           <tr>
             <th>STT</th>
@@ -41,6 +41,13 @@
             <td class="text-center">
               <button class="btn btn-sm btn-primary me-1" @click="editBooking(booking.id)">Cập nhật</button>
               <button class="btn btn-sm btn-warning" @click="viewBooking(booking.id)">Chi tiết</button>
+              <!-- <button
+                class="btn btn-sm btn-success"
+                v-if="booking.status === 'confirmed' && booking.paymentStatus === 'paid'"
+                @click="handleCheckout(booking.id)"
+              >
+                Checkout
+              </button> -->
             </td>
           </tr>
         </tbody>
@@ -118,12 +125,31 @@ function translateStatus(status) {
 
 function translatePayment(status) {
   switch (status) {
-    case 'pending_approval': return 'Đã thanh toán';
+    case 'pending_approval': return 'Chờ duyệt thanh toán';
     case 'pending': return 'Chưa thanh toán';
     case 'timeout': return 'Hết thời gian';
+    case 'paid' : return 'Đã thanh toán';
     default: return '';
   }
 }
+// function handleCheckout(id) {
+//   if (!confirm('Xác nhận checkout đơn đặt phòng này?')) return;
+
+//   axios.put(`/bookings/${id}/checkout`)
+//     .then(res => {
+//       alert(res.data.message || 'Checkout thành công');
+//       // Làm mới danh sách
+//       return axios.get('/bookings');
+//     })
+//     .then(res => {
+//       bookings.value = res.data.data || [];
+//     })
+//     .catch(err => {
+//       const msg = err.response?.data?.message || 'Lỗi khi checkout.';
+//       alert(msg);
+//       console.error('Checkout error:', err);
+//     });
+// }
 const totalPages = computed(() =>
   Math.ceil(filteredBookings.value.length / entriesPerPage.value)
 );
@@ -150,9 +176,10 @@ function statusLabel(status) {
 
 function paymentLabel(status) {
   switch (status) {
-    case 'pending_approval': return 'Đã thanh toán';
+    case 'pending_approval': return 'Chờ duyệt thanh toán';
     case 'pending': return 'Chưa thanh toán';
-    case 'timeout' : return 'Hết thời gian';
+    case 'timeout': return 'Hết thời gian';
+    case 'paid' : return 'Đã thanh toán';
     default: return '---';
   }
 }
@@ -165,3 +192,23 @@ function viewBooking(id) {
   router.push(`/admin/bookings/${id}`);
 }
 </script>
+<style scoped>
+.table th,
+.table td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table td:nth-child(2),
+.table td:nth-child(3),
+.table td:nth-child(4),
+.table td:nth-child(5) {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-control-sm.w-auto {
+  min-width: 180px;
+}
+</style>

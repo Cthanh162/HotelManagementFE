@@ -5,21 +5,21 @@
       <div class="banner-overlay container">
         <h1 class="banner-title">
           <span class="text-light">Chào mừng bạn đến với</span>
-          <span class="highlight">CHITHANHHOTEL</span>
+          <span class="highlight">ChiThanhHotel</span>
         </h1>
         <p class="banner-subtitle">Dịch vụ cho thuê phòng khách sạn sang trọng</p>
 
         <!-- Search Bar -->
-        <div class="search-bar row g-2 mt-4">
+        <div class="search-bar row g-2 mt-4 justify-content-center">
           <div class="col-md-3">
             <input type="text" v-model="searchQuery" class="form-control" placeholder="Từ khoá tìm kiếm" />
           </div>
           <div class="col-md-2">
             <select class="form-select" v-model="filters.roomType">
               <option value="">Chọn loại phòng</option>
-              <option value="Standard">Standard</option>
-              <option value="Deluxe">Deluxe</option>
-              <option value="Suite">Luxury</option>
+               <option v-for="type in roomTypes" :key="type.id" :value="type.name">
+    {{ type.name }}
+  </option>
             </select>
           </div>
           <div class="col-md-2">
@@ -41,8 +41,10 @@
               <option :value="5000000">5 triệu</option>
             </select>
           </div>
-          <div class="col-md-1 text-end">
-            <button class="btn btn-danger w-100" @click="handleSearch">Tìm kiếm</button>
+          <div class="row mt-3">
+            <div class="col-12 text-center">
+              <button class="btn btn-danger px-5 py-2" @click="handleSearch">Tìm kiếm</button>
+            </div>
           </div>
         </div>
       </div>
@@ -56,46 +58,72 @@
           <div class="room-card" v-for="room in filteredRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
+            <div class="center-div">
              <div class="rating">
               <span v-html="renderStars(room.reviews_avg_rating)"></span>
             </div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
+            </div>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
         </div>
       </section>
 
       <!-- Phòng được đặt nhiều -->
-      <section class="rooms-section">
+      <section class="rooms-section margin-top">
         <h2>Phòng được đặt nhiều</h2>
         <div class="room-grid">
           <div class="room-card" v-for="room in mostBookedRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
+            <div class="center-div">
             <div class="rating">{{ room.bookings_count || 0 }} lượt đặt</div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
+            </div>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
         </div>
       </section>
 
       <!-- Phòng đánh giá cao -->
-      <section class="rooms-section">
+      <section class="rooms-section margin-top">
         <h2>Phòng đánh giá cao</h2>
         <div class="room-grid">
           <div class="room-card" v-for="room in topRatedRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
+            <div class="center-div">
             <div class="rating">
               <span v-html="renderStars(room.reviews_avg_rating)"></span>
             </div>
             <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
+            </div>
             <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
           </div>
         </div>
       </section>
     </div>
   </div>
+   <!-- Footer -->
+<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
+  <div class="container">
+    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
+
+    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
+    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <span>Điện thoại: <strong>+84 965540033</strong></span>
+      <span>• Fax: <strong>+84 965540033</strong></span>
+      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
+    </div>
+
+    <div class="mt-3">
+      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
+    </div>
+  </div>
+</footer>
 </template>
 
 <script setup>
@@ -108,7 +136,7 @@ const topRatedRooms = ref([]);
 const filteredRooms = ref([]);
 const searchQuery = ref('');
 const showSearchResults = ref(false);
-
+const roomTypes = ref([]);
 const filters = ref({
   roomType: '',
   capacity: '',
@@ -143,13 +171,15 @@ function handleSearch() {
 
 onMounted(async () => {
   try {
-    const [mostBookedRes, topRatedRes] = await Promise.all([
+    const [mostBookedRes, topRatedRes,roomTypesRes] = await Promise.all([
       axios.get('/rooms/most-booked'),
-      axios.get('/rooms/top-rated')
+      axios.get('/rooms/top-rated'),
+      axios.get('/room-types')
     ]);
 
     mostBookedRooms.value = mostBookedRes.data?.data || [];
     topRatedRooms.value = topRatedRes.data?.data || [];
+    roomTypes.value = roomTypesRes.data?.data || [];
   } catch (err) {
     console.error('Lỗi khi tải danh sách phòng:', err);
   }
@@ -173,6 +203,13 @@ onMounted(async () => {
   padding: 2rem;
   border-radius: 12px;
   width: 100%;
+}
+.center-div{
+  display: flex;
+  align-items: center;
+}
+.margin-top{
+  margin-top: 20px;
 }
 .banner-title {
   font-size: 2.8rem;
@@ -225,7 +262,7 @@ onMounted(async () => {
 .rating {
   color: #ffc107;
   margin: 0.5rem;
-  font-size: 0.9rem;
+  /* font-size: 0.9rem; */
 }
 .price {
   font-weight: bold;

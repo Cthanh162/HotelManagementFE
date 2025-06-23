@@ -16,6 +16,11 @@ const routes = [
     children: [
       { path: "", name: "Home", component: () => import("@/views/user/Home.vue") },
       { path: "/rooms", name: "Rooms", component: () => import("@/views/user/UserRoom.vue") },
+      {
+  path: '/profile',
+  name: 'UserProfile',
+  component: () => import('@/views/user/userProfile.vue')
+},
       { path: "/contact", name: "Contact", component: () => import("@/views/user/ContactForm.vue") },
 
       {
@@ -44,7 +49,8 @@ const routes = [
     { path: "rooms", name: "RoomManager", component: () => import("@/views/admin/RoomManager.vue") },
     { path: 'floors', name: 'FloorManager', component: () => import('@/views/admin/FloorManager.vue') },
     { path: 'services', name: 'ServiceManager', component: () => import('@/views/admin/ServiceManager.vue') },
-
+    { path: 'revenue', name: 'RevenueStats', component: () => import('@/views/admin/RevenueStats.vue') },
+    { path: 'roomType', name: 'roomType', component: () => import('@/views/admin/RoomType.vue') },
     { path: 'bookings', name: 'BookingManager', component: () => import('@/views/admin/AdminBookingList.vue') },
     { path: 'bookings/:id', name: 'AdminBookingDetail', component: () => import('@/views/admin/AdminBookingDetail.vue') },
     { path: 'bookings/:id/edit', name: 'AdminBookingEdit', component: () => import('@/views/admin/AdminBookingEdit.vue') },

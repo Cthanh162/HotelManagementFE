@@ -1,5 +1,4 @@
 <script setup>
-// import { ref } from 'vue';
 import axios from '@/config';
 import ArgonInput from '@/components/ArgonInput.vue';
 import ArgonSwitch from '@/components/ArgonSwitch.vue';
@@ -13,7 +12,7 @@ import ArgonButton from '@/components/ArgonButton.vue';
       <argon-input
         id="username"
         type="text"
-        placeholder="Nhập email đăng nhập"
+        placeholder="Nhập tên tài khoản"
         v-model="userName"
         size="lg"
         required
@@ -72,7 +71,6 @@ import ArgonButton from '@/components/ArgonButton.vue';
 <script>
 export default {
   name: 'SignInForm',
-  // components: { VueHcaptcha },
   props: {
     showCaptcha: {
       type: Boolean,
@@ -110,19 +108,18 @@ export default {
     },
     async handleSubmit() {
       this.errors = {};
-      if (!this.userName) this.errors.userName = 'Vui lòng nhập email';
+      if (!this.userName) this.errors.userName = 'Vui lòng nhập tên tài khoản';
       if (!this.passWord) this.errors.passWord = 'Vui lòng nhập mật khẩu';
       if (Object.keys(this.errors).length) return;
 
       try {
         const res = await axios.post('/login', {
-          email: this.userName,
+          userName: this.userName,
           password: this.passWord,
         });
+
         const token = res.data.token.access_token;
         const user = res.data.user;
-        console.log(token);
-        console.log(user);
 
         localStorage.setItem('accessToken', token);
         localStorage.setItem('user', JSON.stringify(user));
@@ -144,7 +141,7 @@ export default {
           const msg = err.response.data?.message || 'Lỗi không xác định';
 
           if (status === 401) {
-            this.errors.userName = 'Sai email hoặc mật khẩu.';
+            this.errors.userName = 'Sai tài khoản hoặc mật khẩu.';
           } else if (status === 422) {
             this.errors.userName = msg;
           } else {

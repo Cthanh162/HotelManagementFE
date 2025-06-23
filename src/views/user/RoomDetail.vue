@@ -2,19 +2,28 @@
   <div class="container py-5" v-if="room">
     <div class="card shadow-sm p-4">
       <!-- Header -->
+        <h2 class="mb-2">{{ room.roomName }}</h2>
       <div class="d-flex justify-content-between align-items-start flex-wrap">
         <div>
-          <h2 class="mb-2">{{ room.roomName }}</h2>
           <p><strong>Loại phòng:</strong> {{ room.roomType }}</p>
-          <p><strong>Trạng thái:</strong> {{ room.status }}</p>
+          <p><strong>Trạng thái:</strong> {{ displayStatus(room.status) }}</p>
           <p><strong>Người lớn:</strong> {{ room.adults }}</p>
           <p><strong>Trẻ em:</strong> {{ room.children }}</p>
           <p><strong>Sức chứa:</strong> {{ room.capacity }}</p>
           <p><strong>Giá:</strong> {{ formatCurrency(room.price) }} VND / đêm</p>
+          
         </div>
         <div class="text-end">
-          <p><strong>Khách sạn:</strong> {{ room.hotelId }}</p>
-          <p><strong>Tầng:</strong> {{ room.floorId }}</p>
+          <p style="text-align: left;"><strong>Khách sạn:</strong> {{ room.hotelId }}</p>
+          <p style="text-align: left;"> <strong>Tầng:</strong> {{ room.floorId }}</p>
+          <div v-if="services.length" class="mt-2 text-start">
+            <p class="fw-bold mb-1">Dịch vụ đi kèm:</p>
+            <ul class="mb-0 ps-3">
+              <li v-for="s in services" :key="s.id">
+                {{ s.name }} - {{ s.price ? formatCurrency(s.price) + ' VND' : 'Miễn phí' }}
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -127,6 +136,26 @@
       </div>
     </div>
   </div>
+   <!-- Footer -->
+<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
+  <div class="container">
+    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
+
+    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
+    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <span>Điện thoại: <strong>+84 965540033</strong></span>
+      <span>• Fax: <strong>+84 965540033</strong></span>
+      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
+    </div>
+
+    <div class="mt-3">
+      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
+    </div>
+  </div>
+</footer>
 </template>
 
 <script setup>
@@ -141,7 +170,7 @@ const room = ref(null);
 const reviews = ref([]);
 const zoomedImage = ref(null);
 const showReviewPopup = ref(false);
-
+const services = ref([]);
 const booking = ref({
   checkinTime: '',
   checkoutTime: '',
@@ -168,42 +197,57 @@ onMounted(async () => {
     reviews.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải đánh giá:', err);
-    alert('Không thể tải đánh giá.');
+    // alert('Không thể tải đánh giá.');
   }
 
   if (route.query.review === '1') {
     showReviewPopup.value = true;
   }
+  try {
+  const res = await axios.get(`/rooms/${id}/services`);
+  services.value = res.data.data || [];
+} catch (err) {
+  console.error('Lỗi khi lấy dịch vụ phòng:', err);
+}
 });
 
 const totalPrice = computed(() => {
   if (!room.value || !booking.value.checkinTime || !booking.value.checkoutTime) return 0;
 
-  const basePrice = room.value.price;
+  const basePrice = Number(room.value.price);
   let total = 0;
 
   const checkin = dayjs(booking.value.checkinTime);
   const checkout = dayjs(booking.value.checkoutTime);
-  let standardCheckin = checkin.startOf('day').add(14, 'hour');
-  let standardCheckout = checkout.startOf('day').add(12, 'hour').add(1, 'day');
 
-  if (checkin.isAfter(standardCheckin)) standardCheckin = standardCheckin.add(1, 'day');
-  if (checkout.isBefore(standardCheckout)) standardCheckout = standardCheckout.subtract(1, 'day');
-
-  const days = Math.max(0, standardCheckout.diff(standardCheckin, 'day'));
-  total += days * basePrice;
-
-  const earlyHour = standardCheckin.diff(checkin, 'hour');
-  if (checkin.isBefore(standardCheckin)) {
-    if (earlyHour >= 5 && earlyHour < 9) total += basePrice * 0.5;
-    else if (earlyHour >= 0 && earlyHour < 5) total += basePrice * 0.3;
+  // Số đêm ở
+  const nights = checkout.startOf('day').diff(checkin.startOf('day'), 'day');
+  if (nights > 0) {
+    total += nights * basePrice;
   }
 
-  const lateHour = checkout.diff(standardCheckout, 'hour');
+  // === Phụ thu Check-in sớm ===
+  const standardCheckin = checkin.startOf('day').add(14, 'hour');
+  if (checkin.isBefore(standardCheckin)) {
+    const earlyHour = standardCheckin.diff(checkin, 'hour');
+    if (earlyHour >= 5 && earlyHour < 9) {
+      total += basePrice * 0.5; // phụ thu 50%
+    } else if (earlyHour > 0 && earlyHour < 5) {
+      total += basePrice * 0.3; // phụ thu 30%
+    }
+  }
+
+  // === Phụ thu Check-out muộn ===
+  const standardCheckout = checkout.startOf('day').add(12, 'hour');
   if (checkout.isAfter(standardCheckout)) {
-    if (lateHour > 0 && lateHour <= 3) total += basePrice * 0.3;
-    else if (lateHour > 3 && lateHour <= 6) total += basePrice * 0.5;
-    else if (lateHour > 6) total += basePrice;
+    const lateHour = checkout.diff(standardCheckout, 'hour');
+    if (lateHour > 0 && lateHour <= 3) {
+      total += basePrice * 0.3;
+    } else if (lateHour > 3 && lateHour <= 6) {
+      total += basePrice * 0.5;
+    } else if (lateHour > 6) {
+      total += basePrice;
+    }
   }
 
   return Math.round(total);
@@ -271,7 +315,16 @@ function submitReview() {
       alert(message);
     });
 }
-
+function displayStatus(status) {
+  switch (status) {
+    case 'available':
+      return 'Phòng có thể đặt';
+    case 'booked':
+      return 'Đã được đặt';
+    default:
+      return status;
+  }
+}
 function zoomImage(url) {
   zoomedImage.value = url;
 }

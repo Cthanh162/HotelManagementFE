@@ -1,12 +1,8 @@
 <template>
   <main class="main-content mt-0">
-    <div
-      class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg"
-      style="
-        background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg');
-        background-position: top;
-      "
-    >
+    <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg"
+         style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg');
+                background-position: top;">
       <span class="mask bg-gradient-dark opacity-6"></span>
       <div class="container">
         <div class="row justify-content-center">
@@ -39,6 +35,10 @@
                   <label class="form-label">Mật khẩu</label>
                   <input v-model="form.password" type="password" class="form-control" required />
                 </div>
+                <div class="mb-3">
+                  <label class="form-label">Xác nhận mật khẩu</label>
+                  <input v-model="confirmPassword" type="password" class="form-control" required />
+                </div>
                 <button class="btn btn-primary w-100" type="submit">Đăng ký</button>
               </form>
               <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
@@ -61,10 +61,17 @@ const form = ref({
   email: '',
   password: ''
 });
+const confirmPassword = ref('');
 const error = ref(null);
 
 async function submit() {
   error.value = null;
+
+  if (form.value.password !== confirmPassword.value) {
+    error.value = 'Mật khẩu xác nhận không khớp';
+    return;
+  }
+
   try {
     await axios.post('/signup', form.value);
     alert('Đăng ký thành công!');

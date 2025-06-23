@@ -11,7 +11,7 @@
       <table class="table table-bordered align-middle">
         <thead class="table-light text-center">
           <tr>
-            <th>#</th>
+            <th>STT</th>
             <th>Tên dịch vụ</th>
             <th>Trạng thái</th>
             <th>Giá (VND)</th>
