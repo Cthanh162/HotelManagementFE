@@ -86,5 +86,15 @@ const router = createRouter({
   linkActiveClass: "active",
   
 });
+router.beforeEach((to, from, next) => {
+  const user = JSON.parse(localStorage.getItem("user"));
 
+  if (to.path.startsWith("/admin")) {
+    if (!user || !user.roles?.includes("admin")) {
+      return next("/signin");
+    }
+  }
+
+  next();
+});
 export default router;

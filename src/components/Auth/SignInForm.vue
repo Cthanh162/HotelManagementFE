@@ -121,9 +121,14 @@ export default {
         const token = res.data.token.access_token;
         const user = res.data.user;
 
+        console.log("hâhh",user);
         localStorage.setItem('accessToken', token);
         localStorage.setItem('user', JSON.stringify(user));
-
+localStorage.setItem('userRole', JSON.stringify({
+  id: 1,
+  username: 'admin',
+  role: user.roles.includes("admin") // hoặc 'user'
+}));
         if (this.rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('userName', this.userName);
