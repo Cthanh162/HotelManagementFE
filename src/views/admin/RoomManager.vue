@@ -301,7 +301,16 @@ for (let [key, value] of formData.entries()) {
 }
 
 function deleteRoom(id) {
-  axios.delete(`/rooms/${id}`).then(() => fetchRooms());
+  if (!confirm('Bạn có chắc chắn muốn xoá phòng này?')) return;
+
+  axios.delete(`/rooms/${id}`)
+    .then(() => {
+      fetchRooms();
+    })
+    .catch(err => {
+      alert('Lỗi khi xoá phòng!');
+      console.error(err);
+    });
 }
 
 function viewRoom(room) {

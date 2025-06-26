@@ -30,7 +30,7 @@
                 </button>
                 <button
                   class="btn btn-outline-danger btn-sm mt-2 ms-2"
-                  v-if="booking.status !== 'cancelled'"
+                  v-if="booking.status !== 'cancelled' && booking.paymentStatus !== 'paid' && booking.status !== 'cancelled' && booking.status !== 'timeout'"
                   @click="cancelBooking(booking)">
                   Huỷ đặt
                 </button>
@@ -139,6 +139,7 @@ function statusLabel(status) {
     case 'confirmed': return 'Đã xác nhận';
     case 'cancelled': return 'Đã huỷ';
     case 'completed': return 'Đã trả phòng';
+    case 'timeout' : return 'Quá hạn thanh toán';
     default: return status;
   }
 }

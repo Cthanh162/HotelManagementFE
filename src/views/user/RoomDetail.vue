@@ -1,6 +1,8 @@
 <template>
   <div class="container py-5" v-if="room">
     <div class="card shadow-sm p-4">
+    <base-toast ref="toastRef" />
+
       <!-- Header -->
         <h2 class="mb-2">{{ room.roomName }}</h2>
       <div class="d-flex justify-content-between align-items-start flex-wrap">
@@ -60,7 +62,14 @@
           <div class="row mb-3">
             <div class="col-md-6">
               <label>Ngày đến:</label>
-              <input type="datetime-local" v-model="booking.checkinTime" class="form-control" required />
+              <!-- <input type="datetime-local" v-model="booking.checkinTime" class="form-control" required /> -->
+              <input
+                type="datetime-local"
+                v-model="booking.checkinTime"
+                class="form-control"
+                :min="minDateTime"
+                @change="validateCheckinTime"
+              />
             </div>
             <div class="col-md-6">
               <label>Ngày đi:</label>
@@ -159,15 +168,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import dayjs from 'dayjs';
+import BaseToast from '@/components/BaseToast.vue';
 
 const route = useRoute();
 const router = useRouter();
 const room = ref(null);
 const reviews = ref([]);
+const minDateTime = ref(getCurrentMinDateTime());
+const toastRef = ref(null);
+
 const zoomedImage = ref(null);
 const showReviewPopup = ref(false);
 const services = ref([]);
@@ -180,7 +193,34 @@ const booking = ref({
 });
 
 const reviewForm = ref({ rating: '', des: '' });
+function validateCheckinTime() {
+  const selected = new Date(booking.value.checkin);
+  const now = new Date();
 
+  if (selected < now) {
+    toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
+    booking.value.checkin = now.toISOString().slice(0, 16);
+  }
+}
+function getCurrentMinDateTime() {
+  const now = new Date();
+  now.setSeconds(0, 0);
+  return now.toISOString().slice(0, 16);
+}
+watch(() => booking.value.checkin, (val) => {
+  const selectedDate = new Date(val);
+  const now = new Date();
+  const isToday =
+    selectedDate.getFullYear() === now.getFullYear() &&
+    selectedDate.getMonth() === now.getMonth() &&
+    selectedDate.getDate() === now.getDate();
+
+  if (isToday) {
+    minDateTime.value = getCurrentMinDateTime();
+  } else {
+    minDateTime.value = selectedDate.toISOString().slice(0, 16);
+  }
+});
 onMounted(async () => {
   const id = route.params.id;
 

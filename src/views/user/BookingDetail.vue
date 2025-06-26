@@ -29,7 +29,7 @@
               <img :src="booking.paymentProof" alt="Payment Proof" class="img-thumbnail" style="max-width: 300px" />
             </div>
 
-            <router-link to="/user/bookings" class="btn btn-secondary mt-3">Quay lại lịch sử</router-link>
+            <router-link to="/bookings/history" class="btn btn-secondary mt-3">Quay lại lịch sử</router-link>
             <!-- Đánh giá -->
             <div v-if="booking.status === 'confirmed' && !hasReviewed">
               <button class="btn btn-outline-success mt-3" @click="showReviewForm = !showReviewForm">

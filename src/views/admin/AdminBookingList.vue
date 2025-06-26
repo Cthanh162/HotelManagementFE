@@ -97,20 +97,44 @@ onMounted(() => {
     });
 });
 const filteredBookings = computed(() => {
-  if (!searchQuery.value) return bookings.value;
-  const q = searchQuery.value.toLowerCase();
+  let list = bookings.value;
 
-  return bookings.value.filter(b => {
-    return (
-      b.Name?.toLowerCase().includes(q) ||
-      b.phone?.toLowerCase().includes(q) ||
-      b.cccd?.toLowerCase().includes(q) ||
-      b.room?.roomName?.toLowerCase().includes(q) ||
-      formatDate(b.checkinTime).includes(q) ||
-      formatDate(b.checkoutTime).includes(q) ||
-      translateStatus(b.status).toLowerCase().includes(q) ||
-      translatePayment(b.paymentStatus).toLowerCase().includes(q)
-    );
+  // Tìm kiếm
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(b => {
+      return (
+        b.Name?.toLowerCase().includes(q) ||
+        b.phone?.toLowerCase().includes(q) ||
+        b.cccd?.toLowerCase().includes(q) ||
+        b.room?.roomName?.toLowerCase().includes(q) ||
+        formatDate(b.checkinTime).includes(q) ||
+        formatDate(b.checkoutTime).includes(q) ||
+        translateStatus(b.status).toLowerCase().includes(q) ||
+        translatePayment(b.paymentStatus).toLowerCase().includes(q)
+      );
+    });
+  }
+
+  // Sắp xếp ưu tiên:
+  // 1. Trạng thái `pending_payment`
+  // 2. paymentStatus != 'paid'
+  // 3. Thời gian checkOut chưa đến
+
+  return list.sort((a, b) => {
+    const now = new Date();
+
+    const scoreA =
+      (a.status === 'pending_payment' ? 100 : 0) +
+      (a.paymentStatus !== 'paid' ? 10 : 0) +
+      (new Date(a.checkoutTime) > now ? 1 : 0);
+
+    const scoreB =
+      (b.status === 'pending_payment' ? 100 : 0) +
+      (b.paymentStatus !== 'paid' ? 10 : 0) +
+      (new Date(b.checkoutTime) > now ? 1 : 0);
+
+    return scoreB - scoreA;
   });
 });
 function translateStatus(status) {
@@ -170,6 +194,7 @@ function statusLabel(status) {
     case 'confirmed': return 'Đã xác nhận';
     case 'cancelled': return 'Đã huỷ';
     case 'completed': return 'Đã trả phòng';
+    case 'timeout': return 'Hết thời gian thanh toán';
     default: return '---';
   }
 }
@@ -180,6 +205,7 @@ function paymentLabel(status) {
     case 'pending': return 'Chưa thanh toán';
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';
+    case 'cancelled': return 'Đã huỷ';
     default: return '---';
   }
 }
