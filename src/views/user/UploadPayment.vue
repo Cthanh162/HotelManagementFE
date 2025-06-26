@@ -1,46 +1,54 @@
 <template>
   <div class="container py-5" style="background-color: #fff; min-height: 100vh" v-if="booking">
     <div class="row">
-      <!-- Left: Bank Info & Upload -->
+      <!-- Left: Bank Info & Upload + QR -->
       <div class="col-md-7">
-        <h5 class="mb-3">1. Tài khoản ngân hàng</h5>
-        <p><strong>Tên tài khoản:</strong> Nguyen Chi Thanh</p>
-        <p><strong>Số tài khoản:</strong> 8844472165</p>
-        <p><strong>Ngân hàng:</strong> BIDV</p>
-
-        <div class="mt-3">
-          <strong>Thời gian giữ chỗ còn lại:</strong>
-          <span class="text-danger fw-bold">{{ countdown }}</span>
-        </div>
-
-        <div class="upload-box text-center mt-4" @click="triggerFileUpload">
-          <i class="fas fa-upload fa-2x mb-2"></i>
-          <p>Nhấn để chọn ảnh thanh toán</p>
-          <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" hidden />
-        </div>
-
-        <div v-if="previewImage" class="mt-3 text-center">
-          <p class="fw-bold">Ảnh đã chọn:</p>
-          <img :src="previewImage" alt="Ảnh thanh toán" class="img-thumbnail" style="max-width: 300px;" />
-        </div>
-
-        <div class="mt-3 text-center">
-          <button class="btn btn-primary" @click="confirmUpload" :disabled="!selectedFile">Xác nhận</button>
-        </div>
+  <!-- Dòng chứa thông tin ngân hàng và mã QR -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+      <h5 class="mb-3">1. Tài khoản ngân hàng</h5>
+      <p><strong>Tên tài khoản:</strong> Nguyen Chi Thanh</p>
+      <p><strong>Số tài khoản:</strong> 8844472165</p>
+      <p><strong>Ngân hàng:</strong> BIDV</p>
+      <div class="mt-1">
+        <strong>Thời gian giữ chỗ còn lại:</strong>
+        <span class="text-danger fw-bold">{{ countdown }}</span>
       </div>
+    </div>
+
+    <!-- QR code bên phải -->
+    <div class="text-center padding1">
+      <p class="fw-bold mb-2">Quét mã QR để thanh toán:</p>
+      <img
+        src="https://api.qrserver.com/v1/create-qr-code/?data=8844472165&size=180x180"
+        alt="QR Code"
+        class="img-fluid"
+        style="max-width: 180px;"
+      />
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-box text-center mt-4" @click="triggerFileUpload">
+    <i class="fas fa-upload fa-2x mb-2"></i>
+    <p>Nhấn để chọn ảnh thanh toán</p>
+    <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" hidden />
+  </div>
+
+  <div v-if="previewImage" class="mt-3 text-center">
+    <p class="fw-bold">Ảnh đã chọn:</p>
+    <img :src="previewImage" alt="Ảnh thanh toán" class="img-thumbnail" style="max-width: 300px;" />
+  </div>
+
+  <div class="mt-3 text-center">
+    <button class="btn btn-primary" @click="confirmUpload" :disabled="!selectedFile">Xác nhận</button>
+  </div>
+</div>
 
       <!-- Right: Booking Info -->
       <div class="col-md-5">
         <div class="card bg-white text-dark p-3 shadow-sm">
-          <div class="d-flex justify-content-between align-items-start">
-            <h5 class="mb-3">Thông tin đặt phòng</h5>
-            <img
-              src="https://api.qrserver.com/v1/create-qr-code/?data=8844472165&size=100x100"
-              alt="QR Code"
-              style="width: 100px; height: 100px"
-            />
-          </div>
-
+          <h5 class="mb-3">Thông tin đặt phòng</h5>
           <p><strong>Tên:</strong> {{ booking.Name || '---' }}</p>
           <p><strong>SĐT:</strong> {{ booking.phone || '---' }}</p>
           <p><strong>Mã đơn:</strong> #{{ booking.id }}</p>
@@ -58,26 +66,25 @@
   <div v-else class="text-center py-5 text-muted">
     Đang tải thông tin đặt phòng...
   </div>
-   <!-- Footer -->
-<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
-  <div class="container">
-    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
 
-    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
-    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
+  <!-- Footer -->
+  <footer class="bg-light text-center text-muted mt-5 py-4 border-top">
+    <div class="container">
+      <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
+      <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa , Hà Nội</p>
 
-    <div class="d-flex flex-wrap justify-content-center gap-3">
-      <span>Điện thoại: <strong>+84 965540033</strong></span>
-      <span>• Fax: <strong>+84 965540033</strong></span>
-      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
+      <div class="d-flex flex-wrap justify-content-center gap-3">
+        <span>Điện thoại: <strong>+84 965540033</strong></span>
+        <span>• Fax: <strong>+84 965540033</strong></span>
+        <span>• Email: <a href="mailto:chithanh1622003@gmail.com">chithanh1622003@gmail.com</a></span>
+      </div>
+
+      <div class="mt-3">
+        <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
+      </div>
     </div>
-
-    <div class="mt-3">
-      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
-      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
-    </div>
-  </div>
-</footer>
+  </footer>
 </template>
 
 <script setup>
@@ -96,7 +103,7 @@ const previewImage = ref(null);
 
 const countdown = ref('5:00');
 let timer = null;
-let secondsLeft = 600;
+let secondsLeft = 300;
 
 function startCountdown() {
   timer = setInterval(() => {
@@ -107,9 +114,10 @@ function startCountdown() {
 
     if (secondsLeft <= 0) {
       clearInterval(timer);
+      axios.post(`/bookings/${bookingId}/outTime`)
       alert('Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
-      if (booking.value?.roomId) {
-        router.push(`/room/${booking.value.roomId}`);
+      if (booking.value?.room.roomId) {
+        router.push(`/room/${booking.value.room.roomId}`);
       }
     }
   }, 1000);
@@ -128,7 +136,10 @@ function handleFileSelect(e) {
 }
 
 function confirmUpload() {
-  if (!selectedFile.value) return;
+   if (!selectedFile.value) {
+    alert('Yêu cầu upload ảnh thanh toán');
+    return;
+  }
 
   const formData = new FormData();
   formData.append('paymentProof', selectedFile.value);
@@ -138,7 +149,7 @@ function confirmUpload() {
   })
     .then(() => {
       alert('Tải ảnh thanh toán thành công');
-      const roomId = booking.value?.roomId;
+      const roomId = booking.value?.room.roomId;
       if (roomId) {
         router.push(`/room/${roomId}`);
       }
@@ -191,5 +202,8 @@ onUnmounted(() => {
 }
 .upload-box:hover {
   background-color: #f0f0f0;
+}
+.padding1{
+  padding-right: 62px;
 }
 </style>

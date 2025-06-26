@@ -85,7 +85,10 @@
                 <label class="form-label">Email</label>
                 <input class="form-control" v-model="form.email" />
               </div>
-
+              <div class="col-6">
+                <label class="form-label">Họ tên</label>
+                <input class="form-control" v-model="form.fullName" />
+              </div>
               <div class="col-md-6">
                 <label class="form-label">Số điện thoại</label>
                 <input class="form-control" v-model="form.phone" />
@@ -95,7 +98,7 @@
                 <label class="form-label">Mật khẩu</label>
                 <input class="form-control" v-model="form.password" type="password" />
               </div>
-              <div class="col-12">
+              <div class="col-6">
                 <label class="form-label">Địa chỉ</label>
                 <input class="form-control" v-model="form.address" />
               </div>
@@ -127,7 +130,8 @@ const form = ref({
   email: '',
   phone: '',
   password: '',
-  address: ''
+  address: '',
+  fullName:''
 });
 
 onMounted(() => {
@@ -143,6 +147,7 @@ const filteredUsers = computed(() => {
     u.userName?.toLowerCase().includes(keyword) ||
     u.email?.toLowerCase().includes(keyword) ||
     u.phone?.toLowerCase().includes(keyword) ||
+    u.fullName?.toLowerCase().includes(keyword) ||
     u.address?.toLowerCase().includes(keyword)
   );
 });
@@ -170,7 +175,8 @@ function openCreateForm() {
     phone: '',
     userName: '',
     password: '',
-    address: ''
+    address: '',
+    fullName:''
   };
   showModal.value = true;
 }

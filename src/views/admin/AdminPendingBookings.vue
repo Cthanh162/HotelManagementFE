@@ -30,7 +30,7 @@
           <tr v-for="(booking, index) in filteredBookings" :key="booking.id">
             <td>{{ index + 1 }}</td>
             <td>{{ booking.Name || '---' }}</td>
-            <td>Phòng {{ booking.roomId }}</td>
+            <td>Phòng {{ booking.room.roomId }}</td>
             <td>{{ formatDate(booking.checkinTime) }}</td>
             <td>{{ formatDate(booking.checkoutTime) }}</td>
             <td>{{ formatCurrency(booking.totalPrice) }}</td>

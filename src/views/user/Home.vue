@@ -70,38 +70,54 @@
       </section>
 
       <!-- Phòng được đặt nhiều -->
-      <section class="rooms-section margin-top">
-        <h2>Phòng được đặt nhiều</h2>
-        <div class="room-grid">
-          <div class="room-card" v-for="room in mostBookedRooms" :key="room.roomId">
-            <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
-            <h3>{{ room.roomName }}</h3>
-            <div class="center-div">
-            <div class="rating">{{ room.bookings_count || 0 }} lượt đặt</div>
-            <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
-            </div>
-            <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
-          </div>
-        </div>
-      </section>
+      <section class="rooms-section margin-top" v-if="mostBookedRooms.length">
+  <h2>Phòng được đặt nhiều</h2>
+  <div class="room-grid">
+    <div
+      class="room-card"
+      v-for="room in mostBookedRooms"
+      :key="room.roomId"
+    >
+      <img
+        :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'"
+        class="room-thumb"
+      />
+      <h3>{{ room.roomName }}</h3>
+      <div class="center-div">
+        <div class="rating">{{ room.bookings_count || 0 }} lượt đặt</div>
+        <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
+      </div>
+      <router-link :to="`/room/${room.roomId}`" class="view-details">
+        Xem chi tiết
+      </router-link>
+    </div>
+  </div>
+</section>
 
       <!-- Phòng đánh giá cao -->
-      <section class="rooms-section margin-top">
-        <h2>Phòng đánh giá cao</h2>
-        <div class="room-grid">
-          <div class="room-card" v-for="room in topRatedRooms" :key="room.roomId">
-            <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
-            <h3>{{ room.roomName }}</h3>
-            <div class="center-div">
-            <div class="rating">
-              <span v-html="renderStars(room.reviews_avg_rating)"></span>
-            </div>
-            <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
-            </div>
-            <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
-          </div>
+      <section v-if="topRatedRooms.length" class="rooms-section margin-top">
+  <h2>Phòng đánh giá cao</h2>
+  <div class="room-grid">
+    <div
+      v-for="room in topRatedRooms"
+      :key="room.roomId"
+      class="room-card"
+    >
+      <img
+        :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'"
+        class="room-thumb"
+      />
+      <h3>{{ room.roomName }}</h3>
+      <div class="center-div">
+        <div class="rating">
+          <span v-html="renderStars(room.reviews_avg_rating)"></span>
         </div>
-      </section>
+        <p class="price">Giá: {{ Number(room.price).toLocaleString() }} VND</p>
+      </div>
+      <router-link :to="`/room/${room.roomId}`" class="view-details">Xem chi tiết</router-link>
+    </div>
+  </div>
+</section>
     </div>
   </div>
    <!-- Footer -->
@@ -234,30 +250,64 @@ onMounted(async () => {
   color: #333;
 }
 .room-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
+  justify-content: flex-start;
 }
+
 .room-card {
+  width: calc(33.333% - 1rem);
+  box-sizing: border-box;
   border: 1px solid #eee;
   border-radius: 8px;
+  background: white;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  background: white;
   transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
+
 .room-card:hover {
   transform: translateY(-5px);
 }
+
 .room-thumb {
   width: 100%;
-  height: 200px;
+  height: 180px;
   object-fit: cover;
 }
+
 .room-card h3 {
-  font-size: 1.2rem;
   margin: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
   color: #333;
+}
+
+.center-div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 0.5rem;
+}
+
+.rating,
+.price {
+  margin: 0.3rem 0;
+}
+
+.view-details {
+  display: block;
+  text-align: center;
+  padding: 0.5rem;
+  background-color: #28a745;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  margin: 0.5rem;
 }
 .rating {
   color: #ffc107;
