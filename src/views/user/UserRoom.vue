@@ -74,7 +74,7 @@
       <!-- Danh sách phòng -->
       <div class="col-md-9">
         <div class="row g-4">
-          <div v-for="room in rooms" :key="room.roomId" class="col-12">
+          <div v-for="room in paginatedRooms" :key="room.roomId" class="col-12">
             <div class="card p-3 d-flex flex-row align-items-center justify-content-between flex-wrap" style="min-height: 180px;">
               <!-- Ảnh -->
               <img
@@ -112,6 +112,23 @@
 
           <div v-if="rooms.length === 0" class="text-center text-muted">Không có phòng nào.</div>
         </div>
+        <nav v-if="totalPages > 1" class="mt-4">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+        <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">«</button>
+      </li>
+
+      <li v-for="page in visiblePages" :key="page" class="page-item"
+          :class="{ active: page === currentPage, disabled: page === '...'}">
+        <button v-if="page !== '...'" class="page-link" @click="currentPage = page">{{ page }}</button>
+        <span v-else class="page-link">…</span>
+      </li>
+
+      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+        <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">»</button>
+      </li>
+    </ul>
+  </nav>
       </div>
     </div> 
   </div>
@@ -137,7 +154,7 @@
 
 <script setup>
 import axios from '@/config';
-import { ref, onMounted,watch,nextTick } from 'vue';
+import { ref, onMounted,watch,nextTick,computed } from 'vue';
 import { useRouter } from 'vue-router';
 // import BaseToast from '@/components/BaseToast.vue';
 import ToastContainer from '@/components/Toast.vue';
@@ -159,7 +176,37 @@ function showToast(action, message) {
       toastVisible.value = false;
     }, 3000);
   });
-}
+}const currentPage = ref(1);
+const itemsPerPage = 5;
+
+const paginatedRooms = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return rooms.value.slice(start, start + itemsPerPage);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(rooms.value.length / itemsPerPage);
+});
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total);
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+  }
+
+  return pages;
+});
 const router = useRouter();
 const rooms = ref([]);
 const allServices = ref([]);
@@ -199,6 +246,7 @@ async function fetchRooms() {
 
     const res = await axios.get('/rooms/available', { params });
     rooms.value = res.data.data || [];
+    currentPage.value = 1;
   } catch (err) {
     console.error('Lỗi khi tìm kiếm phòng:', err);
         showToast('danger', 'Lỗi khi tìm kiếm phòng!');

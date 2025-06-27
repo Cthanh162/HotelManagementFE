@@ -170,7 +170,10 @@ function saveService() {
 function deleteService(id) {
   if (!confirm('Bạn chắc chắn muốn xoá dịch vụ này?')) return;
   axios.delete(`/services/${id}`)
-    .then(() => fetchServices())
+    .then(() => {fetchServices() 
+        showToast('success', 'Xoá thành công!');
+
+    })
     .catch(err => {
         console.log(err);
         showToast('danger', 'Xoá thất bại!');
