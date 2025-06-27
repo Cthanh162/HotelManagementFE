@@ -57,7 +57,7 @@
       <section v-if="showSearchResults && filteredRooms.length > 0" class="rooms-section">
         <h2>Kết quả tìm kiếm</h2>
         <div class="room-grid">
-          <div class="room-card" v-for="room in filteredRooms" :key="room.roomId">
+          <div class="room-card" v-for="room in paginatedRooms" :key="room.roomId">
             <img :src="room.roomImages?.[0]?.url || room.roomImages?.[0] || 'https://via.placeholder.com/300x200'" class="room-thumb" />
             <h3>{{ room.roomName }}</h3>
             <div class="center-div">
@@ -70,7 +70,27 @@
           </div>
         </div>
       </section>
+      <!-- Pagination -->
+<nav v-if="showSearchResults && totalPages > 1" class="mt-4">
+  <ul class="pagination justify-content-center">
+    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+      <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">«</button>
+    </li>
 
+    <li class="page-item" v-for="page in visiblePages" :key="page" :class="{ active: page === currentPage }">
+      <button class="page-link" @click="currentPage = page">{{ page }}</button>
+    </li>
+
+    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+      <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">»</button>
+    </li>
+  </ul>
+</nav>
+<!-- <li v-for="page in visiblePages" :key="page" class="page-item"
+    :class="{ active: page === currentPage, disabled: page === '...'}">
+  <button v-if="page !== '...'" class="page-link" @click="currentPage = page">{{ page }}</button>
+  <span v-else class="page-link">…</span>
+</li> -->
       <!-- Phòng được đặt nhiều -->
       <section class="rooms-section margin-top" v-if="mostBookedRooms.length">
   <h2>Phòng được đặt nhiều</h2>
@@ -145,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted,nextTick } from 'vue';
+import { ref, onMounted,nextTick,computed } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 const toastAction = ref('');
@@ -167,6 +187,36 @@ function showToast(action, message) {
     }, 3000);
   });
 }
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total);
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+  }
+
+  return pages;
+});
+const currentPage = ref(1);
+const itemsPerPage = 6;
+
+const paginatedRooms = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return filteredRooms.value.slice(start, start + itemsPerPage);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredRooms.value.length / itemsPerPage);
+});
 // const allRooms = ref([]);
 const mostBookedRooms = ref([]);
 const topRatedRooms = ref([]);
