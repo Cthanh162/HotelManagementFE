@@ -44,6 +44,7 @@
 
   <div class="mt-3 text-center">
     <button class="btn btn-primary" @click="confirmUpload" >Xác nhận</button>
+    <button class="btn btn-danger" @click="cancelBooking">Xác nhận huỷ</button>
   </div>
 </div>
 
@@ -107,7 +108,7 @@ const previewImage = ref(null);
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
-
+const showCancelPopup = ref(false);
 function showToast(action, message) {
   toastAction.value = '';
   toastVisible.value = false;
@@ -157,7 +158,24 @@ function handleFileSelect(e) {
   selectedFile.value = file;
   previewImage.value = URL.createObjectURL(file);
 }
+async function cancelBooking() {
+  try {
+    await axios.post(`/bookings/${bookingId}/cancel-payment`);
+    showToast('success', 'Huỷ thanh toán thành công');
+    showCancelPopup.value = false;
 
+    const roomId = booking.value?.room?.roomId;
+    if (roomId) {
+      setTimeout(() => {
+        router.push(`/room/${roomId}`);
+      }, 1500);
+      // router.push(`/room/${roomId}`);
+    }
+  } catch (err) {
+    console.error('Lỗi huỷ thanh toán:', err);
+    showToast('danger', 'Huỷ thanh toán thất bại');
+  }
+}
 function confirmUpload() {
    if (!selectedFile.value) {
       showToast('warning', 'Yêu cầu upload ảnh thanh toán');
@@ -178,7 +196,10 @@ function confirmUpload() {
       
       const roomId = booking.value?.room.roomId;
       if (roomId) {
-        router.push(`/room/${roomId}`);
+        setTimeout(() => {
+          router.push(`/room/${roomId}`);
+        }, 1500);
+        // router.push(`/room/${roomId}`);
       }
     })
     .catch(err => {
@@ -235,5 +256,21 @@ onUnmounted(() => {
 }
 .padding1{
   padding-right: 62px;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
 }
 </style>

@@ -135,7 +135,11 @@ function submitForm() {
 function deleteType(id) {
   if (confirm('Bạn có chắc muốn xoá loại phòng này?')) {
     axios.delete(`/room-types/${id}`)
-      .then(() => fetchRoomTypes())
+      .then(() => {
+        fetchRoomTypes()
+        showToast('success', 'Xoá thành công!');
+
+      })
       .catch(err => {
         console.error('Lỗi khi xoá:', err);
         showToast('danger', 'Xoá thất bại.');

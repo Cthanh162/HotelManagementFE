@@ -221,16 +221,19 @@ async function submitForm() {
   try {
     if (isEdit.value) {
       await axios.put(`/users/${form.value.userId}`, form.value);
+      showToast('success', 'Cập nhật thành công!');
+
       emit('showToast', 'success', 'Cập nhật người dùng thành công');
     } else {
       await axios.post('/users', form.value);
+      showToast('success', 'Thêm mới thành công!');
       emit('showToast', 'success', 'Tạo người dùng mới thành công');
     }
     closeModal();
     refreshUsers();
   } catch (err) {
     let msg = 'Đã xảy ra lỗi';
-  //  showToast('danger', 'Cập nhật người dùng thành công');
+   showToast('danger', 'Đã xảy ra lỗi');
     if (err.response?.status === 422) {
       const errors = err.response.data.errors;
       const first = Object.values(errors)?.[0]?.[0];
@@ -250,10 +253,13 @@ function deleteUser(id) {
   axios.delete(`/users/${id}`)
     .then(() => {
       users.value = users.value.filter(u => u.userId !== id);
+      showToast('success', 'Xoá thành công!');
       emit('showToast', 'success', 'Xoá thành công');
     })
     .catch(err => {
       console.log(err);
+      showToast('success', 'Xoá thất bại!');
+
       emit('showToast', 'danger', 'Xoá thất bại');
 
     });

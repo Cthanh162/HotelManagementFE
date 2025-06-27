@@ -41,9 +41,10 @@
           <label class="form-label">Thanh toán</label>
           <select v-model="booking.paymentStatus" class="form-select">
             <option value="pending">Chờ xác nhận</option>
-            <option value="pending_approval">Đã duyệt thanh toán</option>
+            <option value="pending_approval">Chờ duyệt thanh toán</option>
             <option value="pending_payment">Chưa thanh toán</option>
             <option value="paid">Đã thanh toán</option>
+            <option value="cancelled">Đã huỷ</option>
           </select>
         </div>
       </div>
@@ -114,7 +115,10 @@ function updateBooking() {
   })
     .then(() => {
       showToast('success', 'Cập nhật thành công!');
-      router.push('/admin/bookings');
+      setTimeout(() => {
+          router.push('/admin/bookings');
+        }, 1500);
+      
     })
     .catch(err => {
       console.error('Lỗi khi cập nhật:', err);

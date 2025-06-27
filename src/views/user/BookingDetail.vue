@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5" v-if="booking">
+        <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
+
     <h3 class="mb-4">Chi tiết đơn đặt phòng</h3>
 
     <div class="card shadow-sm">
@@ -82,7 +84,28 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+import { nextTick } from 'vue';
 
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const booking = ref(null);
 const hasReviewed = ref(false);
 const showReviewForm = ref(false);
@@ -119,12 +142,14 @@ function submitReview() {
       Authorization: `Bearer ${token}`
     }
   }).then(() => {
-    alert('Đánh giá thành công!');
+    showToast('success', 'Đánh giá thành công!');
+
     hasReviewed.value = true;
     showReviewForm.value = false;
   }).catch(err => {
     console.error('Lỗi khi đánh giá:', err);
-    alert('Không thể gửi đánh giá');
+    showToast('success', 'Không thể gửi đánh giá');
+
   });
 }
 

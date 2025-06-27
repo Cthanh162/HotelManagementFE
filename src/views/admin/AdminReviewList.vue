@@ -1,5 +1,7 @@
 <template>
   <div class="container py-4">
+        <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
+
     <h4 class="mb-3">Đánh Giá</h4>
 
     <div class="d-flex justify-content-between mb-3">
@@ -66,7 +68,28 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+import { nextTick } from 'vue';
 
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const reviews = ref([]);
 const searchQuery = ref('');
 
@@ -108,11 +131,15 @@ function deleteReview(id) {
     .then(() => {
       reviews.value = reviews.value.filter(r => r.id !== id);
       // Cập nhật lại localStorage
+          showToast('success', 'Xoá thành công!');
+
       const readIds = loadReadStatusFromStorage().filter(rid => rid !== id);
       saveReadStatusToStorage(readIds);
     })
     .catch(err => {
       console.error('Xoá thất bại:', err);
+          showToast('danger', 'Xoá thất bại!');
+
     });
 }
 
@@ -122,8 +149,13 @@ function deleteAll() {
     .then(() => {
       reviews.value = [];
       localStorage.removeItem('readReviews');
+          showToast('success', 'Xoá thành công!');
+
     })
-    .catch(err => console.error('Lỗi xoá tất cả:', err));
+    .catch(err => {console.error('Lỗi xoá tất cả:', err)
+          showToast('danger', 'Xoá thất bại!');
+
+    });
 }
 
 function markAsRead(id) {
