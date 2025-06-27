@@ -73,7 +73,13 @@
             </div>
             <div class="col-md-6">
               <label>Ngày đi:</label>
-              <input type="date" v-model="booking.checkoutTime" class="form-control" required />
+              <input
+                type="date"
+                v-model="booking.checkoutTime"
+                class="form-control"
+                :min="booking.checkinTime || minDate"
+                required
+              />
             </div>
           </div>
 
@@ -169,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed,nextTick } from 'vue';
+import { ref, onMounted, computed,nextTick,watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import dayjs from 'dayjs';
@@ -213,6 +219,17 @@ const booking = ref({
   identityNumber: ''
 });
 
+watch(() => booking.value.checkinTime, (val) => {
+  if (val && booking.value.checkoutTime) {
+    const checkin = new Date(val);
+    const checkout = new Date(booking.value.checkoutTime);
+    if (checkout <= checkin) {
+      const nextDay = new Date(checkin);
+      nextDay.setDate(nextDay.getDate() + 1);
+      booking.value.checkoutTime = nextDay.toISOString().split('T')[0];
+    }
+  }
+});
 const reviewForm = ref({ rating: '', des: '' });
 // function validateCheckinTime() {
 //   const selected = new Date(booking.value.checkin);

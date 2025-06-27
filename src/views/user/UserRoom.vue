@@ -50,17 +50,21 @@
             <label class="form-label">Ngày nhận phòng</label>
             <!-- <input type="datetime-local" v-model="search.checkin" class="form-control" /> -->
             <input
-                type="datetime-local"
-                v-model="search.checkin"
-                class="form-control"
-                :min="minDateTime"
-                @change="validateCheckinTime"
-              />
+              type="date"
+              v-model="search.checkin"
+              class="form-control"
+              :min="minDate"
+            />
           </div>
 
           <div class="mb-3">
             <label class="form-label">Ngày trả phòng</label>
-            <input type="datetime-local" v-model="search.checkout" class="form-control" />
+            <input
+              type="date"
+              v-model="search.checkout"
+              class="form-control"
+              :min="search.checkin || minDate"
+            />
           </div>
 
           <button class="btn btn-danger w-100" @click="fetchRooms">Tìm kiếm</button>
@@ -157,13 +161,13 @@ function showToast(action, message) {
   });
 }
 const router = useRouter();
-const toastRef = ref(null);
 const rooms = ref([]);
 const allServices = ref([]);
 const minDateTime = ref(getCurrentMinDateTime());
 const now = new Date();
 const tomorrow = new Date();
 tomorrow.setDate(now.getDate() + 1);
+const minDate = ref(new Date().toISOString().split("T")[0]);
 
 const search = ref({
   q: '',
@@ -174,7 +178,13 @@ const search = ref({
   checkin: now.toISOString().slice(0, 16),
   checkout: tomorrow.toISOString().slice(0, 16)
 });
-
+watch(() => search.value.checkin, (val) => {
+  if (val && search.value.checkout && new Date(search.value.checkout) <= new Date(val)) {
+    const nextDay = new Date(val);
+    nextDay.setDate(nextDay.getDate() + 1);
+    search.value.checkout = nextDay.toISOString().split('T')[0];
+  }
+});
 async function fetchRooms() {
   try {
     const params = {
@@ -234,15 +244,15 @@ async function fetchServices() {
     console.error('Lỗi khi tải dịch vụ:', err);
   }
 }
-function validateCheckinTime() {
-  const selected = new Date(search.value.checkin);
-  const now = new Date();
+// function validateCheckinTime() {
+//   const selected = new Date(search.value.checkin);
+//   const now = new Date();
 
-  if (selected < now) {
-    toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
-    search.value.checkin = now.toISOString().slice(0, 16);
-  }
-}
+//   if (selected < now) {
+//     toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
+//     search.value.checkin = now.toISOString().slice(0, 16);
+//   }
+// }
 function viewDetails(roomId) {
   router.push(`/room/${roomId}`);
 }
