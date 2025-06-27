@@ -126,14 +126,13 @@ function formatCurrency(val) {
   return Number(val).toLocaleString('vi-VN') + ' đ';
 }
 async function cancelBooking(booking) {
-  const today = dayjs();
-  const checkinDate = dayjs(booking.checkinTime);
+  const today = dayjs().startOf('day');
+  const checkinDate = dayjs(booking.checkinTime).startOf('day');
   const diffDays = checkinDate.diff(today, 'day');
-console.log(diffDays)
   if (diffDays < 3) {
+console.log(diffDays)
+    alert('Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
     showToast('warning', 'Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
-
-    // alert('Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
     return;
   }
 
@@ -145,20 +144,16 @@ console.log(diffDays)
     await axios.put(`/bookings/${booking.id}/cancel`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    showToast('success', 'Huỷ đặt phòng thành công!');
 
-    // alert('Huỷ đặt phòng thành công!');
-    // Reload lại danh sách
     const user = JSON.parse(localStorage.getItem('user'));
     const res = await axios.get(`/bookings/user/${user.userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    showToast('success', 'Huỷ đặt phòng thành công!');
     bookings.value = res.data.data;
   } catch (err) {
     console.error('Lỗi huỷ đặt phòng:', err);
     showToast('danger', 'Có lỗi xảy ra khi huỷ đặt phòng.');
-    
-    // alert('Có lỗi xảy ra khi huỷ đặt phòng.');
   }
 }
 function statusLabel(status) {

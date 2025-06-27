@@ -35,7 +35,7 @@
           <tr v-for="(booking, index) in paginatedBookings" :key="booking.id">
             <td class="text-center">{{ index + 1 + (currentPage - 1) * entriesPerPage }}</td>
             <td>{{ booking.Name }}</td>
-            <td>Phòng {{ booking.room?.roomName || '---' }}</td>
+            <td>{{ booking.room?.roomName || '---' }}</td>
             <td>{{ formatDate(booking.checkinTime) }}</td>
             <td>{{ formatDate(booking.checkoutTime) }}</td>
             <td>{{ statusLabel(booking.status) }}</td>

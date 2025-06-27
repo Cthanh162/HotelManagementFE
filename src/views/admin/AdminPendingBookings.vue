@@ -32,7 +32,7 @@
           <tr v-for="(booking, index) in filteredBookings" :key="booking.id">
             <td>{{ index + 1 }}</td>
             <td>{{ booking.Name || '---' }}</td>
-            <td>Phòng {{ booking.room.roomId }}</td>
+            <td>{{ booking.room.roomName }}</td>
             <td>{{ formatDate(booking.checkinTime) }}</td>
             <td>{{ formatDate(booking.checkoutTime) }}</td>
             <td>{{ formatCurrency(booking.totalPrice) }}</td>
@@ -92,7 +92,8 @@ const zoomedImage = ref(null);
 
 function formatDate(dateStr) {
   if (!dateStr) return '---';
-  return new Date(dateStr).toLocaleString('vi-VN');
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('vi-VN');
 }
 
 function formatCurrency(value) {
