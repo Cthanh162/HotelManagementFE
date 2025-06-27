@@ -175,6 +175,7 @@ function translatePayment(status) {
     case 'pending': return 'Chưa thanh toán';
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';
+    case 'cancelled': return 'Đã huỷ';
     default: return '';
   }
 }
@@ -223,7 +224,7 @@ function statusLabel(status) {
 
 function paymentLabel(status) {
   switch (status) {
-    case 'pending_approval': return 'Đã duyệt thanh toán';
+    case 'pending_approval': return 'Chờ duyệt thanh toán';
     case 'pending': return 'Chờ xác nhận';
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';

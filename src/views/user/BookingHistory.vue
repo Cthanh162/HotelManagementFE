@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5">
+        <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
+
     <h3 class="mb-4">Lịch sử đặt phòng</h3>
 
     <div v-if="bookings.length === 0" class="text-muted text-center">
@@ -68,7 +70,28 @@ import { onMounted, ref } from 'vue';
 import dayjs from 'dayjs'; // dùng để so sánh ngày
 import axios from '@/config';
 import { useRouter } from 'vue-router';
+import ToastContainer from '@/components/Toast.vue';
+import { nextTick } from 'vue';
 
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const bookings = ref([]);
 const router = useRouter();
 
@@ -108,7 +131,9 @@ async function cancelBooking(booking) {
   const diffDays = checkinDate.diff(today, 'day');
 console.log(diffDays)
   if (diffDays < 3) {
-    alert('Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
+    showToast('warning', 'Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
+
+    // alert('Không thể hủy đặt phòng. Liên hệ với khách sạn để huỷ phòng');
     return;
   }
 
@@ -121,16 +146,19 @@ console.log(diffDays)
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    alert('Huỷ đặt phòng thành công!');
+    // alert('Huỷ đặt phòng thành công!');
     // Reload lại danh sách
     const user = JSON.parse(localStorage.getItem('user'));
     const res = await axios.get(`/bookings/user/${user.userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    showToast('success', 'Huỷ đặt phòng thành công!');
     bookings.value = res.data.data;
   } catch (err) {
     console.error('Lỗi huỷ đặt phòng:', err);
-    alert('Có lỗi xảy ra khi huỷ đặt phòng.');
+    showToast('danger', 'Có lỗi xảy ra khi huỷ đặt phòng.');
+    
+    // alert('Có lỗi xảy ra khi huỷ đặt phòng.');
   }
 }
 function statusLabel(status) {
