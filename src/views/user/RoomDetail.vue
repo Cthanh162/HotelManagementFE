@@ -1,7 +1,8 @@
 <template>
   <div class="container py-5" v-if="room">
     <div class="card shadow-sm p-4">
-    <base-toast ref="toastRef" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
 
       <!-- Header -->
         <h2 class="mb-2">{{ room.roomName }}</h2>
@@ -63,17 +64,16 @@
             <div class="col-md-6">
               <label>Ngày đến:</label>
               <!-- <input type="datetime-local" v-model="booking.checkinTime" class="form-control" required /> -->
-              <input
-                type="datetime-local"
+             <input
+                type="date"
                 v-model="booking.checkinTime"
                 class="form-control"
-                :min="minDateTime"
-                @change="validateCheckinTime"
+                :min="booking.checkinTime || minDate"
               />
             </div>
             <div class="col-md-6">
               <label>Ngày đi:</label>
-              <input type="datetime-local" v-model="booking.checkoutTime" class="form-control" required />
+              <input type="date" v-model="booking.checkoutTime" class="form-control" required />
             </div>
           </div>
 
@@ -95,6 +95,7 @@
           </div>
 
           <button class="btn btn-primary">Đặt phòng</button>
+          <router-link to="/rooms" class="btn btn-secondary" style="margin-left: 10px;">Quay lại</router-link>
         </form>
       </div>
     </div>
@@ -168,19 +169,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed,watch } from 'vue';
+import { ref, onMounted, computed,nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import dayjs from 'dayjs';
-import BaseToast from '@/components/BaseToast.vue';
-
+// import BaseToast from '@/components/BaseToast.vue';
+// const emit = defineEmits(['showToast']);
+import ToastContainer from '@/components/Toast.vue';
 const route = useRoute();
 const router = useRouter();
 const room = ref(null);
 const reviews = ref([]);
-const minDateTime = ref(getCurrentMinDateTime());
-const toastRef = ref(null);
+const minDate = ref(new Date().toISOString().split("T")[0]);
+// const toastRef = ref(null);
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
+// const toastRef = ref(null);
 const zoomedImage = ref(null);
 const showReviewPopup = ref(false);
 const services = ref([]);
@@ -193,34 +214,34 @@ const booking = ref({
 });
 
 const reviewForm = ref({ rating: '', des: '' });
-function validateCheckinTime() {
-  const selected = new Date(booking.value.checkin);
-  const now = new Date();
+// function validateCheckinTime() {
+//   const selected = new Date(booking.value.checkin);
+//   const now = new Date();
 
-  if (selected < now) {
-    toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
-    booking.value.checkin = now.toISOString().slice(0, 16);
-  }
-}
-function getCurrentMinDateTime() {
-  const now = new Date();
-  now.setSeconds(0, 0);
-  return now.toISOString().slice(0, 16);
-}
-watch(() => booking.value.checkin, (val) => {
-  const selectedDate = new Date(val);
-  const now = new Date();
-  const isToday =
-    selectedDate.getFullYear() === now.getFullYear() &&
-    selectedDate.getMonth() === now.getMonth() &&
-    selectedDate.getDate() === now.getDate();
+//   if (selected < now) {
+//     toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
+//     booking.value.checkin = now.toISOString().slice(0, 16);
+//   }
+// }
+// function getCurrentMinDateTime() {
+//   const now = new Date();
+//   now.setSeconds(0, 0);
+//   return now.toISOString().slice(0, 16);
+// }
+// watch(() => booking.value.checkin, (val) => {
+//   const selectedDate = new Date(val);
+//   const now = new Date();
+//   const isToday =
+//     selectedDate.getFullYear() === now.getFullYear() &&
+//     selectedDate.getMonth() === now.getMonth() &&
+//     selectedDate.getDate() === now.getDate();
 
-  if (isToday) {
-    minDateTime.value = getCurrentMinDateTime();
-  } else {
-    minDateTime.value = selectedDate.toISOString().slice(0, 16);
-  }
-});
+//   // if (isToday) {
+//   //   minDateTime.value = getCurrentMinDateTime();
+//   // } else {
+//   //   minDateTime.value = selectedDate.toISOString().slice(0, 16);
+//   // }
+// });
 onMounted(async () => {
   const id = route.params.id;
 
@@ -229,7 +250,9 @@ onMounted(async () => {
     room.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải chi tiết phòng:', err);
-    alert('Không thể tải thông tin phòng.');
+    showToast('danger', 'Không thể tải thông tin phòng.');
+
+    // alert('Không thể tải thông tin phòng.');
   }
 
   try {
@@ -255,42 +278,13 @@ const totalPrice = computed(() => {
   if (!room.value || !booking.value.checkinTime || !booking.value.checkoutTime) return 0;
 
   const basePrice = Number(room.value.price);
-  let total = 0;
-
   const checkin = dayjs(booking.value.checkinTime);
   const checkout = dayjs(booking.value.checkoutTime);
 
-  // Số đêm ở
   const nights = checkout.startOf('day').diff(checkin.startOf('day'), 'day');
-  if (nights > 0) {
-    total += nights * basePrice;
-  }
+  const total = Math.max(nights, 1) * basePrice;
 
-  // === Phụ thu Check-in sớm ===
-  const standardCheckin = checkin.startOf('day').add(14, 'hour');
-  if (checkin.isBefore(standardCheckin)) {
-    const earlyHour = standardCheckin.diff(checkin, 'hour');
-    if (earlyHour >= 5 && earlyHour < 9) {
-      total += basePrice * 0.5; // phụ thu 50%
-    } else if (earlyHour > 0 && earlyHour < 5) {
-      total += basePrice * 0.3; // phụ thu 30%
-    }
-  }
-
-  // === Phụ thu Check-out muộn ===
-  const standardCheckout = checkout.startOf('day').add(12, 'hour');
-  if (checkout.isAfter(standardCheckout)) {
-    const lateHour = checkout.diff(standardCheckout, 'hour');
-    if (lateHour > 0 && lateHour <= 3) {
-      total += basePrice * 0.3;
-    } else if (lateHour > 3 && lateHour <= 6) {
-      total += basePrice * 0.5;
-    } else if (lateHour > 6) {
-      total += basePrice;
-    }
-  }
-
-  return Math.round(total);
+  return total;
 });
 
 function submitBooking() {
@@ -298,15 +292,16 @@ function submitBooking() {
   const user = JSON.parse(localStorage.getItem('user'));
 
   if (!token || !user) {
-    alert('Vui lòng đăng nhập để đặt phòng.');
+    showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
+
     return router.push('/signin');
   }
 
   const payload = {
     roomId: room.value.roomId,
     userId: user.userId,
-    checkinTime: booking.value.checkinTime.replace('T', ' ') + ':00',
-    checkoutTime: booking.value.checkoutTime.replace('T', ' ') + ':00',
+    checkinTime: booking.value.checkinTime ,
+    checkoutTime: booking.value.checkoutTime,
     totalPrice: totalPrice.value,
     Name: booking.value.guestName,
     phone: booking.value.phone,
@@ -318,12 +313,15 @@ function submitBooking() {
   })
     .then(res => {
       const bookingId = res.data.data.id;
+      // emit('showToast', 'success', 'Đặt phòng thành công');
+    showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
       router.push(`/booking/${bookingId}/payment`);
     })
     .catch(err => {
       console.error('Lỗi khi đặt phòng:', err);
       const message = err.response?.data?.message || 'Đặt phòng thất bại.';
-      alert(message);
+      showToast('warning', message);
+      // alert(message);
     });
 }
 

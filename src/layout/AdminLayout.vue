@@ -1,5 +1,6 @@
 <template>
   <div class="admin-layout">
+    <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
     <aside class="sidebar">
       <div class="sidebar-title">Quản trị</div>
       <ul>
@@ -20,7 +21,39 @@
     </main>
   </div>
 </template>
+<script>
+import ToastContainer from '@/components/Toast.vue';
 
+export default {
+  components: { ToastContainer },
+  data() {
+    return {
+      toastAction: '',
+      toastMessage: '',
+      showToastFlag: false,
+    };
+  },
+  methods: {
+    showToast(action, message) {
+      this.toastAction = '';
+      this.toastMessage = '';
+      this.showToastFlag = false;
+
+      // Kích hoạt lại Toast hiển thị
+      this.$nextTick(() => {
+        this.toastAction = action;
+        this.toastMessage = message;
+        this.showToastFlag = true;
+
+        // Ẩn sau 3s nếu Toast.vue chưa xử lý auto-hide
+        setTimeout(() => {
+          this.showToastFlag = false;
+        }, 3000);
+      });
+    }
+  }
+};
+</script>
 <style scoped>
 .admin-layout {
   display: flex;

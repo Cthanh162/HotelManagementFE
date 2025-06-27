@@ -1,6 +1,8 @@
 // src/views/admin/FloorManager.vue
 <template>
   <div class="container py-4">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mt-3 mb-4">Quản lý tầng</h4>
     <button @click="openForm" class="btn btn-success mb-3">Thêm tầng</button>
 
@@ -44,9 +46,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,nextTick} from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const floors = ref([]);
 const showForm = ref(false);
 const editingFloor = ref(null);
@@ -66,7 +87,6 @@ function openForm() {
   showForm.value = true;
 }
 function editFloor(floor) {
-  console.log('Floor to edit:', floor); // 👉 Kiểm tra tại đây
 
   editingFloor.value = floor;
   console.log("aaa",editingFloor.value.id);
@@ -89,32 +109,44 @@ function closeForm() {
 // }
 function submitForm() {
   if (editingFloor.value) {
-    // Cập nhật chỉ floorName
     axios.put(`/floors/${editingFloor.value.id}`, {
       floorName: form.value.floorName
     })
       .then(() => {
+        showToast('success', 'Cập nhật thành công!');
         fetchFloors();
         closeForm();
       })
-      .catch(err => console.error('Lỗi khi cập nhật tầng:', err));
+      .catch(err => {
+        console.log(err);
+        showToast('danger', 'Cập nhật thất bại!');
+
+      });
   } else {
-    // Tạo mới cần cả hotelId
     axios.post('/floors', {
       hotelId: 1,
       floorName: form.value.floorName
     })
       .then(() => {
+        showToast('success', 'Thêm mới thành công!');
         fetchFloors();
         closeForm();
       })
-      .catch(err => console.error('Lỗi khi tạo tầng:', err));
+      .catch(err => {
+        console.log(err);
+        showToast('danger', 'Thêm mới thất bại!');
+
+      });
   }
 }
 function deleteFloor(id) {
   axios.delete(`/floors/${id}`)
     .then(() => fetchFloors())
-    .catch(err => console.error('Lỗi khi xoá tầng:', err));
+   .catch(err => {
+        console.log(err);
+        showToast('danger', 'Xoá thất bại!');
+
+      });
 }
 </script>
 

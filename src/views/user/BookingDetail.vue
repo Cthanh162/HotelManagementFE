@@ -31,7 +31,7 @@
 
             <router-link to="/bookings/history" class="btn btn-secondary mt-3">Quay lại lịch sử</router-link>
             <!-- Đánh giá -->
-            <div v-if="booking.status === 'confirmed' && !hasReviewed">
+            <div v-if="['confirmed', 'completed'].includes(booking.status) && !hasReviewed">
               <button class="btn btn-outline-success mt-3" @click="showReviewForm = !showReviewForm">
                 {{ showReviewForm ? 'Đóng form' : 'Đánh giá phòng' }}
               </button>

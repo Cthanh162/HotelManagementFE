@@ -1,5 +1,7 @@
 <template>
   <div class="container py-4">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mb-4">Danh sách đặt phòng</h4>
 
     <div class="d-flex justify-content-between mb-3">
@@ -77,10 +79,29 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted,nextTick } from 'vue';
 import axios from '@/config';
 import { useRouter } from 'vue-router';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const router = useRouter();
 const bookings = ref([]);
 const entriesPerPage = ref(10);
@@ -93,6 +114,7 @@ onMounted(() => {
       bookings.value = res.data.data || [];
     })
     .catch(err => {
+      showToast('warning', 'Lỗi khi tải danh sách bookings');
       console.error('Lỗi khi tải danh sách bookings:', err);
     });
 });
@@ -201,8 +223,8 @@ function statusLabel(status) {
 
 function paymentLabel(status) {
   switch (status) {
-    case 'pending_approval': return 'Chờ duyệt thanh toán';
-    case 'pending': return 'Chưa thanh toán';
+    case 'pending_approval': return 'Đã duyệt thanh toán';
+    case 'pending': return 'Chờ xác nhận';
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';
     case 'cancelled': return 'Đã huỷ';

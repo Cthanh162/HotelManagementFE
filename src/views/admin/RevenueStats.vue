@@ -57,6 +57,7 @@
 import { ref, onMounted } from 'vue';
 import axios from '@/config';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -69,13 +70,18 @@ import {
 } from 'chart.js';
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+dayjs.extend(isoWeek);
 
+const startOfWeek = dayjs().startOf('isoWeek').format('YYYY-MM-DD');
+const endOfWeek = dayjs().endOf('isoWeek').format('YYYY-MM-DD');
+
+console.log('Tuần hiện tại từ:', startOfWeek, 'đến', endOfWeek);
 // Filters mặc định (7 ngày gần nhất)
 const filters = ref({
-  from: dayjs().subtract(6, 'day').format('YYYY-MM-DD'),
-  to: dayjs().format('YYYY-MM-DD'),
+  from: startOfWeek,
+  to: endOfWeek,
   type: 'day',
-  status: 'confirmed',
+  status: ['confirmed', 'completed'],
   paymentStatus: 'paid',
   hotelId: 1
 });

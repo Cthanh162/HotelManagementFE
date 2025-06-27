@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mb-4">Danh sách đơn chờ duyệt thanh toán</h4>
 
     <!-- Search -->
@@ -61,8 +63,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 
 const bookings = ref([]);
 const searchQuery = ref('');
@@ -93,18 +115,20 @@ function loadBookings() {
 
 function approve(id) {
   const token = localStorage.getItem('accessToken');
-  if (!token) return alert('Vui lòng đăng nhập');
+  if (!token) {
+    showToast('warning', 'Vui lòng đăng nhâp!');
+  }
 
   axios.put(`/bookings/${id}/approve`, {}, {
     headers: { Authorization: `Bearer ${token}` }
   })
     .then(() => {
-      alert('Đã duyệt thành công');
+      showToast('success', 'Đã duyệt thành công!');
       loadBookings();
     })
     .catch(err => {
       console.error('Lỗi duyệt:', err);
-      alert('Không thể duyệt đơn này');
+      showToast('danger', 'Duyệt thất bại!');
     });
 }
 

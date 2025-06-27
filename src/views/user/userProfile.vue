@@ -1,6 +1,8 @@
 <template>
   <div class="container py-4">
     <div class="border rounded p-4 shadow-sm bg-white round1">
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <!-- THÔNG TIN KHÁCH HÀNG -->
     <h5 class="fw-bold mb-3">Thông tin khách hàng</h5>
     <div class="row mb-4">
@@ -53,20 +55,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
 
 const profile = ref({});
 const form = ref({});
 const userId = JSON.parse(localStorage.getItem('user'))?.userId || null;
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const fetchProfile = async () => {
   try {
     const res = await axios.post(`/users/${userId}`);
     profile.value = res.data.data;
     form.value = { ...profile.value };
   } catch (err) {
-    console.error('Lỗi lấy thông tin user:', err);
+    showToast('danger', 'Lỗi lấy thông tin user:',err);
+
+    // console.error('Lỗi lấy thông tin user:', err);
   }
 };
 
@@ -75,11 +98,15 @@ onMounted(fetchProfile);
 const updateProfile = async () => {
   try {
     await axios.put(`/users/${userId}`, form.value);
-    alert('Cập nhật thành công!');
+    showToast('success', 'Cập nhật thành công!');
+
+    // alert('Cập nhật thành công!');
     fetchProfile();
   } catch (err) {
     console.error('Lỗi cập nhật user:', err);
-    alert('Cập nhật thất bại.');
+    showToast('danger', 'Cập nhật thất bại.');
+
+    // alert('Cập nhật thất bại.');
   }
 };
 

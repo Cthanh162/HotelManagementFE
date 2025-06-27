@@ -7,6 +7,8 @@ import ArgonButton from '@/components/ArgonButton.vue';
 </script>
 
 <template>
+      <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
+
   <form role="form" @submit.prevent="handleSubmit">
     <div class="mb-3">
       <argon-input
@@ -27,8 +29,6 @@ import ArgonButton from '@/components/ArgonButton.vue';
         type="password"
         placeholder="Nhập mật khẩu"
         v-model="passWord"
-        icon="fa-solid fa-eye"
-        iconDir="right"
         size="lg"
         required
       />
@@ -50,10 +50,6 @@ import ArgonButton from '@/components/ArgonButton.vue';
         :checked="rememberMe"
         @input="rememberMeChange"
       >Ghi nhớ đăng nhập</argon-switch>
-
-      <router-link class="text-success text-sm" to="/forgot">
-        Quên mật khẩu?
-      </router-link>
     </div>
     <div class="text-center">
       <argon-button
@@ -69,6 +65,28 @@ import ArgonButton from '@/components/ArgonButton.vue';
 </template>
 
 <script>
+import ToastContainer from '../Toast.vue';
+import { ref, nextTick } from 'vue';
+
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 export default {
   name: 'SignInForm',
   props: {
@@ -124,11 +142,12 @@ export default {
         console.log("hâhh",user);
         localStorage.setItem('accessToken', token);
         localStorage.setItem('user', JSON.stringify(user));
-localStorage.setItem('userRole', JSON.stringify({
-  id: 1,
-  username: 'admin',
-  role: user.roles.includes("admin") // hoặc 'user'
-}));
+        localStorage.setItem('userRole', JSON.stringify({
+          id: 1,
+          username: 'admin',
+          role: user.roles.includes("admin") // hoặc 'user'
+        }));
+         showToast('success', 'Đăng nhập thành công!');
         if (this.rememberMe) {
           localStorage.setItem('rememberMe', 'true');
           localStorage.setItem('userName', this.userName);
@@ -147,13 +166,18 @@ localStorage.setItem('userRole', JSON.stringify({
 
           if (status === 401) {
             this.errors.userName = 'Sai tài khoản hoặc mật khẩu.';
+            showToast('danger', 'Sai tài khoản hoặc mật khẩu!');
           } else if (status === 422) {
             this.errors.userName = msg;
+            showToast('danger', 'Đăng nhập thất bại!');
           } else {
             this.errors.userName = `Lỗi máy chủ (${status}): ${msg}`;
+            showToast('danger', 'Lỗi máy chủ');
           }
         } else {
           this.errors.userName = 'Không thể kết nối tới máy chủ. Vui lòng thử lại sau.';
+            showToast('danger', 'Không thể kết nối tới máy chủ. Vui lòng thử lại sau.');
+
         }
         console.error('Đăng nhập lỗi:', err);
       }

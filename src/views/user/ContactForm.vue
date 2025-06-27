@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h3 class="mb-3">Liên hệ với chúng tôi</h3>
     <p class="mb-4 text-muted">
       Bạn có câu hỏi nào không? Xin đừng ngần ngại liên hệ trực tiếp với chúng tôi. Nhóm của chúng tôi sẽ liên hệ với bạn trong vòng một vài giờ để giúp bạn.
@@ -62,9 +64,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const form = ref({
   name: '',
   email: '',
@@ -81,11 +102,14 @@ const submitForm = async () => {
 
   try {
     const res = await axios.post('/contacts', form.value);
-        successMessage.value = 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất!';
+    showToast('success', 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất!');
+        // successMessage.value = 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất!';
     form.value = { name: '', email: '', message: '' };
     console.log(res.data);
   } catch (err) {
-        errorMessage.value = err.response?.data?.message || 'Gửi liên hệ thất bại. Vui lòng thử lại.';
+    showToast('danger','Gửi liên hệ thất bại. Vui lòng thử lại.');
+
+        // errorMessage.value = err.response?.data?.message || 'Gửi liên hệ thất bại. Vui lòng thử lại.';
   } finally {
     isSubmitting.value = false;
   }

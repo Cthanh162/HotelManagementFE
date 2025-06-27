@@ -1,8 +1,9 @@
 <template>
   <div>
+    
     <header class="user-header">
       <nav class="nav-bar">
-        <div class="logo">Hotel</div>
+        <div class="logo"> <router-link to="/">ChiThanhHotel</router-link></div>
         <ul class="nav-links">
           <li :class="{ active: isActive('/') }">
             <router-link to="/">Trang chủ</router-link>
