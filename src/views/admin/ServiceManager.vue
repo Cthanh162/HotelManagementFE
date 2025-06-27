@@ -1,5 +1,7 @@
 <template>
   <div class="container py-4">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mb-4">Quản lý Dịch vụ / Tiện nghi</h4>
 
     <div class="d-flex justify-content-between mb-3">
@@ -71,9 +73,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const services = ref([]);
 const showModal = ref(false);
 const isEdit = ref(false);
@@ -123,17 +144,26 @@ function saveService() {
   if (isEdit.value) {
     axios.put(`/services/${form.value.id}`, payload)
       .then(() => {
+        showToast('success', 'Cập nhật thành công!');
+
         fetchServices();
         closeModal();
       })
-      .catch(err => alert('Lỗi khi cập nhật' + err));
+     .catch(err => {
+        console.log(err);
+        showToast('danger', 'Cập nhật thất bại!');
+      });
   } else {
     axios.post('/services', payload)
       .then(() => {
+        showToast('success', 'Thêm mới thành công!');
         fetchServices();
         closeModal();
       })
-      .catch(err => alert('Lỗi khi thêm mới'+err));
+      .catch(err => {
+        console.log(err);
+        showToast('danger', 'Thêm mới thất bại!');
+      });
   }
 }
 
@@ -141,7 +171,10 @@ function deleteService(id) {
   if (!confirm('Bạn chắc chắn muốn xoá dịch vụ này?')) return;
   axios.delete(`/services/${id}`)
     .then(() => fetchServices())
-    .catch(err => alert('Xoá thất bại' + err));
+    .catch(err => {
+        console.log(err);
+        showToast('danger', 'Xoá thất bại!');
+      });
 }
 
 const filteredServices = computed(() => {

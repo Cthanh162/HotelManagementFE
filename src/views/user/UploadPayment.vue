@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5" style="background-color: #fff; min-height: 100vh" v-if="booking">
+         <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <div class="row">
       <!-- Left: Bank Info & Upload + QR -->
       <div class="col-md-7">
@@ -41,7 +43,7 @@
   </div>
 
   <div class="mt-3 text-center">
-    <button class="btn btn-primary" @click="confirmUpload" :disabled="!selectedFile">Xác nhận</button>
+    <button class="btn btn-primary" @click="confirmUpload" >Xác nhận</button>
   </div>
 </div>
 
@@ -88,10 +90,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted,nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 
+const emit = defineEmits(['showToast']);
+import ToastContainer from '@/components/Toast.vue';
 const route = useRoute();
 const router = useRouter();
 const bookingId = route.params.bookingId;
@@ -100,7 +104,25 @@ const fileInput = ref(null);
 const booking = ref(null);
 const selectedFile = ref(null);
 const previewImage = ref(null);
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const countdown = ref('5:00');
 let timer = null;
 let secondsLeft = 300;
@@ -115,7 +137,8 @@ function startCountdown() {
     if (secondsLeft <= 0) {
       clearInterval(timer);
       axios.post(`/bookings/${bookingId}/outTime`)
-      alert('Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
+      showToast('warning', 'Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
+
       if (booking.value?.room.roomId) {
         router.push(`/room/${booking.value.room.roomId}`);
       }
@@ -137,7 +160,8 @@ function handleFileSelect(e) {
 
 function confirmUpload() {
    if (!selectedFile.value) {
-    alert('Yêu cầu upload ảnh thanh toán');
+      showToast('warning', 'Yêu cầu upload ảnh thanh toán');
+    // alert('Yêu cầu upload ảnh thanh toán');
     return;
   }
 
@@ -148,7 +172,10 @@ function confirmUpload() {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
     .then(() => {
-      alert('Tải ảnh thanh toán thành công');
+      // alert('Tải ảnh thanh toán thành công');
+      showToast('success', 'Tải ảnh thanh toán thành công');
+      emit('showToast', 'success', 'Đặt phòng thành công');
+      
       const roomId = booking.value?.room.roomId;
       if (roomId) {
         router.push(`/room/${roomId}`);
@@ -156,7 +183,7 @@ function confirmUpload() {
     })
     .catch(err => {
       console.error(err);
-      alert('Tải ảnh thất bại');
+      showToast('danger', 'Tải ảnh thất bại');
     });
 }
 
@@ -172,7 +199,8 @@ function formatCurrency(val) {
 
 onMounted(async () => {
   if (!bookingId) {
-    alert('Không tìm thấy bookingId!');
+    showToast('danger', 'Không tìm thấy bookingId!');
+    // alert('Không tìm thấy bookingId!');
     return;
   }
 
@@ -182,7 +210,9 @@ onMounted(async () => {
     startCountdown();
   } catch (err) {
     console.error('Lỗi khi tải booking:', err);
-    alert('Không thể tải thông tin đơn phòng');
+    showToast('danger', 'Không thể tải thông tin đơn phòng');
+
+    // alert('Không thể tải thông tin đơn phòng');
   }
 });
 

@@ -20,7 +20,7 @@
             <div class="col-md-7">
               <div class="card-body">
                 <h5 class="card-title">{{ booking.room?.roomName }}</h5>
-                <p class="card-text"><strong>Loại:</strong> {{ booking.room?.roomType }}</p>
+                <p class="card-text"><strong>Loại:</strong> {{ booking.room?.roomType.name }}</p>
                 <p class="card-text"><strong>Ngày đến:</strong> {{ formatDate(booking.checkinTime) }}</p>
                 <p class="card-text"><strong>Ngày đi:</strong> {{ formatDate(booking.checkoutTime) }}</p>
                 <p class="card-text"><strong>Trạng thái:</strong> {{ statusLabel(booking.status) }}</p>

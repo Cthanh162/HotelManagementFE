@@ -1,5 +1,6 @@
 <template>
   <div class="container py-4">
+     <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
     <h4 class="mb-3">Danh sách khách hàng</h4>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -115,15 +116,39 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from '@/config';
+// import BaseToast from '@/components/BaseToast.vue';
+const emit = defineEmits(['showToast']);
+import ToastContainer from '@/components/Toast.vue';
 
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
+const toastRef = ref(null);
 const users = ref([]);
 const entriesPerPage = ref(10);
 const currentPage = ref(1);
 const searchQuery = ref('');
 const showModal = ref(false);
 const isEdit = ref(false);
+
 const form = ref({
   userId: null,
   userName: '',
@@ -131,14 +156,21 @@ const form = ref({
   phone: '',
   password: '',
   address: '',
-  fullName:''
+  fullName: ''
 });
 
 onMounted(() => {
+  refreshUsers();
+});
+
+function refreshUsers() {
   axios.get('/users')
     .then(res => users.value = res.data.data || [])
-    .catch(err => console.error('Lỗi khi lấy danh sách user:', err));
-});
+    .catch(err => {
+      console.error('Lỗi khi lấy danh sách user:', err);
+      toastRef.value?.showToast?.('Không thể tải danh sách người dùng', 'error');
+    });
+}
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value;
@@ -176,7 +208,7 @@ function openCreateForm() {
     userName: '',
     password: '',
     address: '',
-    fullName:''
+    fullName: ''
   };
   showModal.value = true;
 }
@@ -185,19 +217,31 @@ function closeModal() {
   showModal.value = false;
 }
 
-function submitForm() {
-  if (isEdit.value) {
-    axios.put(`/users/${form.value.userId}`, form.value)
-      .then(() => {
-        closeModal();
-        refreshUsers();
-      });
-  } else {
-    axios.post('/users', form.value)
-      .then(() => {
-        closeModal();
-        refreshUsers();
-      });
+async function submitForm() {
+  try {
+    if (isEdit.value) {
+      await axios.put(`/users/${form.value.userId}`, form.value);
+      emit('showToast', 'success', 'Cập nhật người dùng thành công');
+    } else {
+      await axios.post('/users', form.value);
+      emit('showToast', 'success', 'Tạo người dùng mới thành công');
+    }
+    closeModal();
+    refreshUsers();
+  } catch (err) {
+    let msg = 'Đã xảy ra lỗi';
+  //  showToast('danger', 'Cập nhật người dùng thành công');
+    if (err.response?.status === 422) {
+      const errors = err.response.data.errors;
+      const first = Object.values(errors)?.[0]?.[0];
+      msg = first || 'Dữ liệu không hợp lệ';
+    } else {
+      msg = err.response?.data?.message || msg;
+    }
+
+    await nextTick(); // ensure toastRef is ready
+    toastRef.value?.showToast?.(msg, 'error');
+    showToast('danger', 'Yêu cầu nhập đầy đủ thông tin');
   }
 }
 
@@ -206,16 +250,20 @@ function deleteUser(id) {
   axios.delete(`/users/${id}`)
     .then(() => {
       users.value = users.value.filter(u => u.userId !== id);
-      alert('Xóa thành công');
+      emit('showToast', 'success', 'Xoá thành công');
     })
     .catch(err => {
-      console.error('Lỗi khi xóa:', err);
-      alert('Xóa thất bại');
+      console.log(err);
+      emit('showToast', 'danger', 'Xoá thất bại');
+
     });
 }
-
-function refreshUsers() {
-  axios.get('/users')
-    .then(res => users.value = res.data.data || []);
-}
 </script>
+
+<style scoped>
+.toast {
+  min-width: 250px;
+  animation: fadein 0.3s ease-in-out;
+  position: relative;
+}
+</style>

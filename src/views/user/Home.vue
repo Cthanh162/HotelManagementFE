@@ -1,6 +1,8 @@
 <template>
   <div>
     <!-- Banner Full Width -->
+         <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <div class="banner">
       <div class="banner-overlay container">
         <h1 class="banner-title">
@@ -143,9 +145,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 // const allRooms = ref([]);
 const mostBookedRooms = ref([]);
 const topRatedRooms = ref([]);
@@ -180,8 +201,14 @@ function handleSearch() {
   }).then(res => {
     filteredRooms.value = res.data.data || [];
     showSearchResults.value = true;
+    console.log(filteredRooms.value)
+    if (filteredRooms.value.length === 0) {
+      showToast('warning', 'Không có dữ liệu phù hợp.');
+    }
+
   }).catch(err => {
     console.error('Lỗi khi tìm kiếm:', err);
+    showToast('danger', 'Lỗi khi tìm kiếm phòng!');
   });
 }
 

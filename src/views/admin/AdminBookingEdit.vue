@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mb-4">Cập nhật thông tin Booking</h4>
 
     <div v-if="booking" class="card p-4 shadow-sm">
@@ -30,8 +32,8 @@
           <label class="form-label">Trạng thái đơn</label>
           <select v-model="booking.status" class="form-select">
             <option value="pending_payment">Chờ xác nhận</option>
-            <option value="CONFIRMED">Đã xác nhận</option>
-            <option value="CANCELLED">Đã huỷ</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="cancelled">Đã huỷ</option>
           </select>
         </div>
 
@@ -39,8 +41,9 @@
           <label class="form-label">Thanh toán</label>
           <select v-model="booking.paymentStatus" class="form-select">
             <option value="pending">Chờ xác nhận</option>
+            <option value="pending_approval">Đã duyệt thanh toán</option>
             <option value="pending_payment">Chưa thanh toán</option>
-            <option value="pending_approval">Đã thanh toán</option>
+            <option value="paid">Đã thanh toán</option>
           </select>
         </div>
       </div>
@@ -56,10 +59,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const route = useRoute();
 const router = useRouter();
 const bookingId = route.params.id;
@@ -72,7 +94,8 @@ onMounted(() => {
     })
     .catch(err => {
       console.error('Lỗi khi lấy booking:', err);
-      alert('Không thể tải dữ liệu booking');
+      showToast('warning', 'Không thể tải dữ liệu booking!');
+
     });
 });
 
@@ -90,12 +113,12 @@ function updateBooking() {
     }
   })
     .then(() => {
-      alert('Cập nhật thành công');
+      showToast('success', 'Cập nhật thành công!');
       router.push('/admin/bookings');
     })
     .catch(err => {
       console.error('Lỗi khi cập nhật:', err);
-      alert('Cập nhật thất bại');
+      showToast('danger', 'Cập nhật thất bại!');
     });
 }
 

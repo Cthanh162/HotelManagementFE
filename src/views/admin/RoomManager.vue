@@ -1,5 +1,7 @@
 <template>
   <div class="container-fluid">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mt-3 mb-4">Danh sách phòng</h4>
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button @click="openAddModal" class="btn btn-success">Thêm mới</button>
@@ -183,9 +185,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const rooms = ref([]);
 const services = ref([]);
 const floors = ref([]);
@@ -296,6 +317,8 @@ for (let [key, value] of formData.entries()) {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   // await axios.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+          showToast('success', 'Thành công!');
+
   fetchRooms();
   closeForm();
 }
@@ -308,7 +331,8 @@ function deleteRoom(id) {
       fetchRooms();
     })
     .catch(err => {
-      alert('Lỗi khi xoá phòng!');
+          showToast('danger', 'Xoá thất bại!');
+
       console.error(err);
     });
 }

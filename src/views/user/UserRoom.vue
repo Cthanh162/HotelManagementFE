@@ -1,6 +1,7 @@
 <template>
   <div class="container py-4">
-    <base-toast ref="toastRef" />
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <div class="row">
       <!-- Bộ lọc -->
       <div class="col-md-3">
@@ -132,10 +133,29 @@
 
 <script setup>
 import axios from '@/config';
-import { ref, onMounted,watch } from 'vue';
+import { ref, onMounted,watch,nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import BaseToast from '@/components/BaseToast.vue';
+// import BaseToast from '@/components/BaseToast.vue';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const router = useRouter();
 const toastRef = ref(null);
 const rooms = ref([]);
@@ -171,7 +191,9 @@ async function fetchRooms() {
     rooms.value = res.data.data || [];
   } catch (err) {
     console.error('Lỗi khi tìm kiếm phòng:', err);
-    toastRef.value?.showToast?.('Không thể tìm kiếm phòng', 'error');
+        showToast('danger', 'Lỗi khi tìm kiếm phòng!');
+
+    // toastRef.value?.showToast?.('Không thể tìm kiếm phòng', 'error');
   }
 }
 function getCurrentMinDateTime() {

@@ -1,5 +1,7 @@
 <template>
   <div class="container-fluid">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mt-3 mb-4">Quản lý loại phòng</h4>
     <div class="mb-3">
       <button @click="openAddModal" class="btn btn-success">Thêm loại phòng</button>
@@ -60,9 +62,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,nextTick } from 'vue';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const roomTypes = ref([]);
 const showForm = ref(false);
 const editingType = ref(null);
@@ -99,12 +120,15 @@ function submitForm() {
 
   axios[method](url, payload)
     .then(() => {
+        showToast('success', 'Thêm mới thành công!');
       fetchRoomTypes();
       closeForm();
     })
     .catch(err => {
+        showToast('danger', 'Lưu thất bại!');
+        
       console.error('Lỗi khi lưu loại phòng:', err);
-      alert('Lưu thất bại.');
+    //   alert('Lưu thất bại.');
     });
 }
 
@@ -114,7 +138,7 @@ function deleteType(id) {
       .then(() => fetchRoomTypes())
       .catch(err => {
         console.error('Lỗi khi xoá:', err);
-        alert('Xoá thất bại.');
+        showToast('danger', 'Xoá thất bại.');
       });
   }
 }

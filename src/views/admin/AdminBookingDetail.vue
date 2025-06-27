@@ -1,5 +1,7 @@
 <template>
   <div class="container py-5">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <div v-if="booking" class="card shadow-sm p-4">
       <h3 class="mb-4">Chi tiết đơn đặt phòng</h3>
       <div class="row">
@@ -75,10 +77,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const route = useRoute();
 const booking = ref(null);
 const id = route.params.id;
@@ -131,12 +152,16 @@ function sendCheckout(fee = 0) {
     lateFee: fee
   })
     .then(res => {
-      alert(res.data.message || 'Checkout thành công!');
+      showToast('success', 'Checkout thành công!');
+      console.log(res)
+      // alert(res.data.message || 'Checkout thành công!');
       booking.value.status = 'completed';
       showFeeModal.value = false;
     })
     .catch(err => {
-      alert(err.response?.data?.message || 'Lỗi khi checkout.');
+      showToast('danger', 'Lỗi khi checkout!');
+      console.log(err)
+      // alert(err.response?.data?.message || 'Lỗi khi checkout.');
     });
 }
 </script>
