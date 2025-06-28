@@ -121,9 +121,9 @@
           <div class="form-group">
             <label>Trạng thái:</label>
             <select v-model="form.status" class="form-control" required>
-              <option value="available">Available</option>
-              <option value="Booked">Booked</option>
-              <option value="Maintenance">Maintenance</option>
+              <option value="available">Đang mở</option>
+              <option value="Booked">Tạm khóa</option>
+              <option value="Maintenance">Bảo trì</option>
             </select>
           </div>
           <div class="form-group">
