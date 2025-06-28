@@ -6,13 +6,13 @@
 
     <div class="d-flex justify-content-between mb-3">
       <div>
-        <label>
+        <!-- <label>
           <select class="form-select form-select-sm" v-model="entriesPerPage" style="width: auto; display: inline-block;">
             <option value="5">5 entries per page</option>
             <option value="10">10 entries per page</option>
             <option value="20">20 entries per page</option>
           </select>
-        </label>
+        </label> -->
       </div>
       <input v-model="searchQuery" type="text" class="form-control form-control-sm w-auto" placeholder="Tìm kiếm..." />
     </div>
@@ -60,7 +60,7 @@
     <nav>
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <a class="page-link" href="#" @click.prevent="currentPage--">Trước</a>
+          <a class="page-link" href="#" @click.prevent="currentPage--">«</a>
         </li>
         <li
           class="page-item"
@@ -71,7 +71,7 @@
           <a class="page-link" href="#" @click.prevent="currentPage = page">{{ page }}</a>
         </li>
         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-          <a class="page-link" href="#" @click.prevent="currentPage++">Sau</a>
+          <a class="page-link" href="#" @click.prevent="currentPage++">»</a>
         </li>
       </ul>
     </nav>

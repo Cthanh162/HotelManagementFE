@@ -309,8 +309,10 @@ function submitBooking() {
 
   if (!token || !user) {
     showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
-
-    return router.push('/signin');
+    setTimeout(() => {
+        return router.push('/signin');
+      }, 1500);
+    
   }
 
   const payload = {
@@ -329,8 +331,11 @@ function submitBooking() {
     .then(res => {
       const bookingId = res.data.data.id;
       // emit('showToast', 'success', 'Đặt phòng thành công');
-    showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
-      router.push(`/booking/${bookingId}/payment`);
+      showToast('success', 'Đặt phòng thành công.');
+      setTimeout(() => {
+          router.push(`/booking/${bookingId}/payment`);
+        }, 1500);
+      
     })
     .catch(err => {
       console.error('Lỗi khi đặt phòng:', err);

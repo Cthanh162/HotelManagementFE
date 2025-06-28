@@ -141,7 +141,10 @@ function startCountdown() {
       showToast('warning', 'Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
 
       if (booking.value?.room.roomId) {
+        setTimeout(() => {
         router.push(`/room/${booking.value.room.roomId}`);
+      }, 2000);
+        
       }
     }
   }, 1000);

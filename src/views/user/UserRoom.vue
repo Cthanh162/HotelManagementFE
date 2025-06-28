@@ -292,15 +292,6 @@ async function fetchServices() {
     console.error('Lỗi khi tải dịch vụ:', err);
   }
 }
-// function validateCheckinTime() {
-//   const selected = new Date(search.value.checkin);
-//   const now = new Date();
-
-//   if (selected < now) {
-//     toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
-//     search.value.checkin = now.toISOString().slice(0, 16);
-//   }
-// }
 function viewDetails(roomId) {
   router.push(`/room/${roomId}`);
 }
