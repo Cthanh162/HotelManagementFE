@@ -158,13 +158,15 @@ console.log(diffDays)
 }
 function statusLabel(status) {
   switch (status) {
-    case 'pending_payment': return 'Chờ thanh toán';
+    case 'pending_payment': return 'Chờ xác nhận';
     case 'confirmed': return 'Đã xác nhận';
     case 'cancelled': return 'Đã huỷ';
     case 'completed': return 'Đã trả phòng';
-    case 'timeout' : return 'Quá hạn thanh toán';
+    case 'timeout': return 'Hết thời gian thanh toán';
+    case 'reject' : return 'Từ chối thanh toán';
     default: return status;
   }
+  
 }
 </script>
 
