@@ -165,6 +165,7 @@ function translateStatus(status) {
     case 'confirmed': return 'Đã xác nhận';
     case 'cancelled': return 'Đã huỷ';
     case 'completed': return 'Đã trả phòng';
+    case 'reject' : return 'Từ chối thanh toán';
     default: return '';
   }
 }
@@ -176,6 +177,8 @@ function translatePayment(status) {
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';
     case 'cancelled': return 'Đã huỷ';
+    case 'reject' : return 'Từ chối thanh toán';
+
     default: return '';
   }
 }
@@ -218,6 +221,8 @@ function statusLabel(status) {
     case 'cancelled': return 'Đã huỷ';
     case 'completed': return 'Đã trả phòng';
     case 'timeout': return 'Hết thời gian thanh toán';
+    case 'reject' : return 'Từ chối thanh toán';
+
     default: return '---';
   }
 }
@@ -229,6 +234,8 @@ function paymentLabel(status) {
     case 'timeout': return 'Hết thời gian';
     case 'paid' : return 'Đã thanh toán';
     case 'cancelled': return 'Đã huỷ';
+    case 'reject' : return 'Từ chối thanh toán';
+
     default: return '---';
   }
 }

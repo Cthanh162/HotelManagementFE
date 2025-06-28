@@ -29,7 +29,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(booking, index) in filteredBookings" :key="booking.id">
+          <tr v-for="(booking, index) in filteredBookings" :key="booking.id" style="height: 170px;">
             <td>{{ index + 1 }}</td>
             <td>{{ booking.Name || '---' }}</td>
             <td>{{ booking.room.roomName }}</td>
@@ -48,6 +48,7 @@
             </td>
             <td>
               <button class="btn btn-success btn-sm" @click="approve(booking.id)">Duyệt</button>
+              <button class="btn btn-danger btn-sm ml" @click="reject(booking.id)">Từ chối</button>
             </td>
           </tr>
         </tbody>
@@ -132,7 +133,24 @@ function approve(id) {
       showToast('danger', 'Duyệt thất bại!');
     });
 }
+function reject(id) {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    showToast('warning', 'Vui lòng đăng nhâp!');
+  }
 
+  axios.put(`/bookings/${id}/reject`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(() => {
+      showToast('success', 'Từ chối thành công!');
+      loadBookings();
+    })
+    .catch(err => {
+      console.error('Lỗi duyệt:', err);
+      showToast('danger', 'Từ chối thất bại!');
+    });
+}
 // ✅ Tìm kiếm theo nhiều trường
 const filteredBookings = computed(() => {
   if (!searchQuery.value) return bookings.value;
@@ -175,5 +193,8 @@ onMounted(loadBookings);
   max-height: 90%;
   border-radius: 8px;
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+.ml{
+      margin-left: 8px;
 }
 </style>
