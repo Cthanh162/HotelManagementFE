@@ -157,8 +157,11 @@ export default {
           localStorage.removeItem('userName');
           localStorage.removeItem('passWord');
         }
-
-        this.$router.push({ name: 'Home' });
+        if(user.roles.includes("admin")){
+          this.$router.push({ name: 'RevenueStats' });
+        }else{
+          this.$router.push({ name: 'Home' });
+        }
       } catch (err) {
         if (err.response) {
           const status = err.response.status;

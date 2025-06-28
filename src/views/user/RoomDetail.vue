@@ -91,10 +91,10 @@
             <label>Số điện thoại:</label>
             <input type="text" v-model="booking.phone" class="form-control" required />
           </div>
-          <div class="mb-3">
+          <!-- <div class="mb-3">
             <label>CCCD:</label>
             <input type="text" v-model="booking.identityNumber" class="form-control" required />
-          </div>
+          </div> -->
 
           <div class="mb-3">
             <p><strong>Giá tạm tính:</strong> {{ totalPrice.toLocaleString() }} VND</p>
@@ -215,8 +215,7 @@ const booking = ref({
   checkinTime: '',
   checkoutTime: '',
   guestName: '',
-  phone: '',
-  identityNumber: ''
+  phone: ''
 });
 
 watch(() => booking.value.checkinTime, (val) => {
@@ -321,8 +320,7 @@ function submitBooking() {
     checkoutTime: booking.value.checkoutTime,
     totalPrice: totalPrice.value,
     Name: booking.value.guestName,
-    phone: booking.value.phone,
-    cccd: booking.value.identityNumber
+    phone: booking.value.phone
   };
 
   axios.post('/bookings', payload, {
