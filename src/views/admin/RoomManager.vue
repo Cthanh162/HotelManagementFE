@@ -25,11 +25,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(room, index) in filteredRooms" :key="room.roomId">
+          <tr v-for="(room, index) in paginatedRooms" :key="room.roomId">
+            <!-- <td>{{ index + 1 + (currentPage - 1) * itemsPerPage }}</td> -->
             <td>{{ index + 1 }}</td>
             <td>{{ room.roomName }}</td>
             <td>
-              <img v-if="room.roomImages?.length" :src="room.roomImages[0]?.url || room.roomImages[0]" width="80" />
+              <img v-if="room.roomImages?.length" :src="room.roomImages[0]?.url || room.roomImages[0]" width="80" @click="zoomImage(room.roomImages[0]?.url || room.roomImages[0])" class="payment-img" />
             </td>
             <td>
               <button v-if="room.roomVideo" @click="viewVideo(room.roomVideo)" class="btn btn-sm btn-outline-primary">Xem video</button>
@@ -49,6 +50,22 @@
         </tbody>
       </table>
     </div>
+     <nav v-if="totalPages > 1" class="mt-3">
+  <ul class="pagination justify-content-center">
+    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+      <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">«</button>
+    </li>
+
+    <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: page === currentPage, disabled: page === '...' }">
+      <button v-if="page !== '...'" class="page-link" @click="currentPage = page">{{ page }}</button>
+      <span v-else class="page-link">…</span>
+    </li>
+
+    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+      <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">»</button>
+    </li>
+  </ul>
+</nav>
     <!-- Modal chi tiết -->
     
  <!-- Modal Chi tiết -->
@@ -80,7 +97,7 @@
               @click="zoomImage(img.url || img)"
               width="100"
               height="80"
-              class="rounded shadow-sm"
+              class="rounded shadow-sm payment-img"
               style="cursor: pointer;"
             />
           </div>
@@ -182,16 +199,20 @@
         </form>
       </div>
     </div>
+    <div v-if="zoomedImage" class="image-modal" @click.self="zoomedImage = null">
+      <img :src="zoomedImage" class="zoomed-img" />
+    </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed,nextTick } from 'vue';
+import { ref, onMounted, computed,nextTick,watch } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
-
+const currentPage = ref(1);
+const itemsPerPage = 10;
 function showToast(action, message) {
   toastAction.value = '';
   toastVisible.value = false;
@@ -207,6 +228,8 @@ function showToast(action, message) {
     }, 3000);
   });
 }
+const zoomedImage = ref(null);
+
 const rooms = ref([]);
 const services = ref([]);
 const floors = ref([]);
@@ -231,7 +254,9 @@ const form = ref({
   imageFiles: [],
   videoFile: null,
 });
-
+function zoomImage(url) {
+  zoomedImage.value = url;
+}
 onMounted(() => {
   fetchRooms();
   axios.get('/floors?hotelId=1').then(res => floors.value = res.data.data);
@@ -247,7 +272,37 @@ const filteredRooms = computed(() => {
     r.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
+const paginatedRooms = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return filteredRooms.value.slice(start, start + itemsPerPage);
+});
 
+const totalPages = computed(() => {
+  return Math.ceil(filteredRooms.value.length / itemsPerPage);
+});
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total);
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+  }
+
+  return pages;
+});
+watch([searchQuery, filteredRooms], () => {
+  currentPage.value = 1;
+});
 function fetchRooms() {
   axios.get('/rooms/getAll').then(res => rooms.value = res.data.data);
 }
@@ -328,6 +383,7 @@ function deleteRoom(id) {
 
   axios.delete(`/rooms/${id}`)
     .then(() => {
+      showToast('success', 'Xoá phòng thành công!');
       fetchRooms();
     })
     .catch(err => {
@@ -378,6 +434,31 @@ main .main-content{
 }
 .modal-scrollable {
   max-height: 90vh; overflow-y: auto;
+}
+.payment-img {
+  width: 100px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.zoomed-img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 </style>
 <style>
