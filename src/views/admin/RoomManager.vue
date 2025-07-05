@@ -387,8 +387,7 @@ function deleteRoom(id) {
       fetchRooms();
     })
     .catch(err => {
-          showToast('danger', 'Xoá thất bại!');
-
+      showToast('danger', 'Xoá thất bại!');
       console.error(err);
     });
 }

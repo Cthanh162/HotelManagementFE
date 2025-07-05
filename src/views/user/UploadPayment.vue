@@ -9,9 +9,9 @@
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
     <div>
       <h5 class="mb-3">1. Tài khoản ngân hàng</h5>
-      <p><strong>Tên tài khoản:</strong> Nguyen Chi Thanh</p>
-      <p><strong>Số tài khoản:</strong> 8844472165</p>
-      <p><strong>Ngân hàng:</strong> BIDV</p>
+      <p><strong>Tên tài khoản:</strong> NGUYEN CHI THANH</p>
+      <p><strong>Số tài khoản:</strong> 8881602038888</p>
+      <p><strong>Ngân hàng:</strong> MB</p>
       <div class="mt-1">
         <strong>Thời gian giữ chỗ còn lại:</strong>
         <span class="text-danger fw-bold">{{ countdown }}</span>
@@ -22,7 +22,7 @@
     <div class="text-center padding1">
       <p class="fw-bold mb-2">Quét mã QR để thanh toán:</p>
       <img
-        src="https://api.qrserver.com/v1/create-qr-code/?data=8844472165&size=180x180"
+        src="../../assets/img/qr.jpeg"
         alt="QR Code"
         class="img-fluid"
         style="max-width: 180px;"
@@ -141,7 +141,7 @@ function startCountdown() {
       showToast('warning', 'Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
 
       if (booking.value?.room.roomId) {
-        setTimeout(() => {
+      setTimeout(() => {
         router.push(`/room/${booking.value.room.roomId}`);
       }, 2000);
         
