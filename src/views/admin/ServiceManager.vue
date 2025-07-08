@@ -1,6 +1,6 @@
 <template>
   <div class="container py-4">
-        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
     <h4 class="mb-4">Quản lý Dịch vụ / Tiện nghi</h4>
 
@@ -28,7 +28,7 @@
             <td>{{ Number(service.price).toLocaleString() }}</td>
             <td class="text-center">
               <button class="btn btn-sm btn-primary me-2" @click="editService(service)">Sửa</button>
-              <button class="btn btn-sm btn-danger" @click="deleteService(service.id)">Xoá</button>
+              <button class="btn btn-sm btn-danger" @click="confirmDelete(service.id)">Xoá</button>
             </td>
           </tr>
         </tbody>
@@ -69,13 +69,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal xác nhận xoá -->
+    <ConfirmModal
+      v-if="showConfirmModal"
+      :message="confirmMessage"
+      @confirm="handleConfirm"
+      @close="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed,nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
+
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
@@ -95,17 +105,21 @@ function showToast(action, message) {
     }, 3000);
   });
 }
+
 const services = ref([]);
 const showModal = ref(false);
 const isEdit = ref(false);
 const searchQuery = ref('');
-
 const form = ref({
   id: null,
   name: '',
   status: 'active',
   price: 0,
 });
+
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
 
 function fetchServices() {
   axios.get('/services')
@@ -141,43 +155,44 @@ function saveService() {
     price: form.value.price || 0,
   };
 
-  if (isEdit.value) {
-    axios.put(`/services/${form.value.id}`, payload)
-      .then(() => {
-        showToast('success', 'Cập nhật thành công!');
+  const request = isEdit.value
+    ? axios.put(`/services/${form.value.id}`, payload)
+    : axios.post('/services', payload);
 
-        fetchServices();
-        closeModal();
-      })
-     .catch(err => {
-        console.log(err);
-        showToast('danger', 'Cập nhật thất bại!');
-      });
-  } else {
-    axios.post('/services', payload)
-      .then(() => {
-        showToast('success', 'Thêm mới thành công!');
-        fetchServices();
-        closeModal();
-      })
-      .catch(err => {
-        console.log(err);
-        showToast('danger', 'Thêm mới thất bại!');
-      });
-  }
-}
-
-function deleteService(id) {
-  if (!confirm('Bạn chắc chắn muốn xoá dịch vụ này?')) return;
-  axios.delete(`/services/${id}`)
-    .then(() => {fetchServices() 
-        showToast('success', 'Xoá thành công!');
-
+  request
+    .then(() => {
+      showToast('success', isEdit.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+      fetchServices();
+      closeModal();
     })
     .catch(err => {
-        console.log(err);
-        showToast('danger', 'Xoá thất bại!');
-      });
+      console.log(err);
+      showToast('danger', isEdit.value ? 'Cập nhật thất bại!' : 'Thêm mới thất bại!');
+    });
+}
+
+function confirmDelete(id) {
+  openConfirmModal('Bạn có chắc muốn xoá dịch vụ này?', async () => {
+    try {
+      await axios.delete(`/services/${id}`);
+      showToast('success', 'Xoá thành công!');
+      fetchServices();
+    } catch (err) {
+      console.log(err);
+      showToast('danger', 'Xoá thất bại!');
+    }
+  });
+}
+
+function openConfirmModal(message, action) {
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  showConfirmModal.value = true;
+}
+
+function handleConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction.value) confirmAction.value();
 }
 
 const filteredServices = computed(() => {

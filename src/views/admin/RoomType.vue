@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid">
-        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
     <h4 class="mt-3 mb-4">Quản lý loại phòng</h4>
     <div class="mb-3">
@@ -24,7 +24,7 @@
             <td>{{ type.des }}</td>
             <td>
               <button @click="editType(type)" class="btn btn-primary btn-sm">Sửa</button>
-              <button @click="deleteType(type.id)" class="btn btn-danger btn-sm ms-2">Xóa</button>
+              <button @click="confirmDelete(type.id)" class="btn btn-danger btn-sm ms-2">Xóa</button>
             </td>
           </tr>
         </tbody>
@@ -49,7 +49,7 @@
                 <label class="form-label">Mô tả</label>
                 <textarea v-model="form.des" class="form-control" rows="4"></textarea>
               </div>
-              <div class="text-end  ">
+              <div class="text-end">
                 <button type="button" class="btn btn-secondary ms-2 padding1" @click="closeForm">Đóng</button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
               </div>
@@ -58,13 +58,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal xác nhận xoá -->
+    <ConfirmModal
+      v-if="showConfirmModal"
+      :message="confirmMessage"
+      @confirm="handleConfirm"
+      @close="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted,nextTick } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
+
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
@@ -78,15 +88,18 @@ function showToast(action, message) {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
-
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
   });
 }
+
 const roomTypes = ref([]);
 const showForm = ref(false);
 const editingType = ref(null);
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
 
 const form = ref({
   name: '',
@@ -120,36 +133,41 @@ function submitForm() {
 
   axios[method](url, payload)
     .then(() => {
-        showToast('success', 'Thêm mới thành công!');
+      showToast('success', editingType.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
       fetchRoomTypes();
       closeForm();
     })
     .catch(err => {
-        showToast('danger', 'Lưu thất bại!');
-        
       console.error('Lỗi khi lưu loại phòng:', err);
-    //   alert('Lưu thất bại.');
+      showToast('danger', 'Lưu thất bại!');
     });
 }
 
-function deleteType(id) {
-  if (confirm('Bạn có chắc muốn xoá loại phòng này?')) {
-    axios.delete(`/room-types/${id}`)
-      .then(() => {
-        fetchRoomTypes()
-        showToast('success', 'Xoá thành công!');
-
-      })
-      .catch(err => {
-        console.error('Lỗi khi xoá:', err);
-        showToast('danger', 'Xoá thất bại.');
-      });
-  }
+function confirmDelete(id) {
+  openConfirmModal('Bạn có chắc muốn xoá loại phòng này?', async () => {
+    try {
+      await axios.delete(`/room-types/${id}`);
+      showToast('success', 'Xoá thành công!');
+      fetchRoomTypes();
+    } catch (err) {
+      console.error('Lỗi khi xoá:', err);
+      showToast('danger', 'Xoá thất bại.');
+    }
+  });
 }
 
-onMounted(() => {
-  fetchRoomTypes();
-});
+function openConfirmModal(message, action) {
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  showConfirmModal.value = true;
+}
+
+function handleConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction.value) confirmAction.value();
+}
+
+onMounted(fetchRoomTypes);
 </script>
 
 <style scoped>
@@ -162,7 +180,7 @@ onMounted(() => {
   justify-content: center;
   z-index: 1000;
 }
-.padding1{
-    margin-right: 10px !important;;
+.padding1 {
+  margin-right: 10px !important;
 }
 </style>

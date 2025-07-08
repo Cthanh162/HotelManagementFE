@@ -43,7 +43,7 @@
             <td class="text-center">
   <div class="d-flex justify-content-center gap-1 align-items-center">
     <button @click="editRoom(room)" class="btn btn-primary btn-sm nomargin">Sửa</button>
-    <button @click="deleteRoom(room.roomId)" class="btn btn-danger btn-sm nomargin">Xoá</button>
+   <button @click="confirmDelete(room.roomId)" class="btn btn-danger btn-sm nomargin">Xoá</button>
   </div>
 </td>
           </tr>
@@ -199,6 +199,12 @@
         </form>
       </div>
     </div>
+    <ConfirmModal
+  v-if="showConfirmModal"
+  :message="confirmMessage"
+  @confirm="handleConfirm"
+  @close="showConfirmModal = false"
+/>
     <div v-if="zoomedImage" class="image-modal" @click.self="zoomedImage = null">
       <img :src="zoomedImage" class="zoomed-img" />
     </div>
@@ -208,6 +214,22 @@
 import { ref, onMounted, computed,nextTick,watch } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
+
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
+
+function openConfirmModal(message, action) {
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  showConfirmModal.value = true;
+}
+
+function handleConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction.value) confirmAction.value();
+}
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
@@ -341,55 +363,50 @@ function handleVideoUpload(e) {
 
 async function submitForm() {
   const formData = new FormData();
-  // formData.append('hotelId', String(form.value.hotelId));
-  // formData.append('floorId', String(form.value.floorId));
-  // formData.append('roomName', String(form.value.roomName));
-  // formData.append('status', String(form.value.status));
-  // formData.append('roomTypeId', String(form.value.roomTypeId));
-  // formData.append('capacity', String(form.value.capacity));
-  // formData.append('adults', String(form.value.adults));
-  // formData.append('children', String(form.value.children));
-  // formData.append('price', String(form.value.price));
-  // formData.append('description', String(form.value.description || ''));
+ if (editingRoom.value) {
+    formData.append('_method', 'PUT'); // 👈 Đây là dòng quan trọng nhất!
+  }
   for (const key in form.value) {
-    if (key === 'imageFiles') {
-      form.value.imageFiles.forEach(f => formData.append('roomImages[]', f));
-    } else if (key === 'services') {
-      form.value.services.forEach(id => formData.append('services[]', id));
-    } else if (key === 'videoFile' && form.value.videoFile) {
-      formData.append('roomVideo', form.value.videoFile);
+    const value = form.value[key];
+
+    if (key === 'imageFiles' && Array.isArray(value)) {
+      value.forEach(f => formData.append('roomImages[]', f));
+    } else if (key === 'services' && Array.isArray(value)) {
+      value.forEach(id => formData.append('services[]', id));
+    } else if (key === 'videoFile' && value) {
+      formData.append('roomVideo', value);
     } else {
-      formData.append(key, form.value[key]);
+      formData.append(key, value ?? ''); 
     }
   }
-for (let [key, value] of formData.entries()) {
-    console.log(`${key}: ${value}`);
+
+  for (let [k, v] of formData.entries()) {
+    console.log(`${k}: ${v}`);
   }
+
   const url = editingRoom.value ? `/rooms/${editingRoom.value.roomId}` : '/rooms';
-  const method = editingRoom.value ? axios.put : axios.post;
+  // const method = editingRoom.value ? axios.put : axios.post;
 
-    await method(url, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  // await axios.post(url, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-          showToast('success', 'Thành công!');
+  await axios.post(url, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 
+  showToast('success', 'Thành công!');
   fetchRooms();
   closeForm();
 }
 
-function deleteRoom(id) {
-  if (!confirm('Bạn có chắc chắn muốn xoá phòng này?')) return;
-
-  axios.delete(`/rooms/${id}`)
-    .then(() => {
+function confirmDelete(id) {
+  openConfirmModal('Bạn có chắc chắn muốn xoá phòng này?', async () => {
+    try {
+      await axios.delete(`/rooms/${id}`);
       showToast('success', 'Xoá phòng thành công!');
       fetchRooms();
-    })
-    .catch(err => {
+    } catch (err) {
       showToast('danger', 'Xoá thất bại!');
       console.error(err);
-    });
+    }
+  });
 }
 
 function viewRoom(room) {

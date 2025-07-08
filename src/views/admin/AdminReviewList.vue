@@ -1,6 +1,6 @@
 <template>
   <div class="container py-4">
-        <ToastContainer v-if="showToastFlag" :action="toastAction" :message="toastMessage" />
+    <ToastContainer v-if="toastVisible" :action="toastAction" :message="toastMessage" />
 
     <h4 class="mb-3">Đánh Giá</h4>
 
@@ -45,10 +45,7 @@
             <td>{{ review.des }}</td>
             <td>{{ formatDate(review.createdAt) }}</td>
             <td>
-              <button
-                class="btn btn-sm btn-primary me-1"
-                @click="markAsRead(review.id)"
-              >
+              <button class="btn btn-sm btn-primary me-1" @click="markAsRead(review.id)">
                 Đánh dấu là đã đọc
               </button>
               <button class="btn btn-sm btn-danger" @click="deleteReview(review.id)">
@@ -57,43 +54,69 @@
             </td>
           </tr>
           <tr v-if="reviews.length === 0">
-            <td colspan="7" class="text-muted">Không có đánh giá nào.</td>
+            <td colspan="7" class="text-muted text-center">Không có đánh giá nào.</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Modal xác nhận -->
+    <ConfirmModal
+      v-if="showConfirmModal"
+      :message="confirmMessage"
+      @confirm="handleConfirm"
+      @close="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
-import { nextTick } from 'vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
 
+// Toast
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
 
 function showToast(action, message) {
   toastAction.value = '';
-  toastVisible.value = false;
   toastMessage.value = '';
+  toastVisible.value = false;
 
   nextTick(() => {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
-
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
   });
 }
+
+// State
 const reviews = ref([]);
 const searchQuery = ref('');
 
-// Đọc danh sách ID đánh giá đã đọc từ localStorage
+// Modal confirm
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
+
+function openConfirmModal(message, action) {
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  showConfirmModal.value = true;
+}
+
+function handleConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction.value) confirmAction.value();
+}
+
+// LocalStorage: trạng thái đã đọc
 function loadReadStatusFromStorage() {
   try {
     return JSON.parse(localStorage.getItem('readReviews') || '[]');
@@ -106,6 +129,7 @@ function saveReadStatusToStorage(ids) {
   localStorage.setItem('readReviews', JSON.stringify(ids));
 }
 
+// Load dữ liệu
 function loadReviews() {
   axios.get('/reviews')
     .then(res => {
@@ -121,43 +145,37 @@ function loadReviews() {
     });
 }
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('vi-VN');
-}
-
+// Xử lý xoá
 function deleteReview(id) {
-  if (!confirm('Bạn có chắc chắn muốn xoá đánh giá này?')) return;
-  axios.delete(`/reviews/${id}`)
-    .then(() => {
+  openConfirmModal('Bạn có chắc chắn muốn xoá đánh giá này?', async () => {
+    try {
+      await axios.delete(`/reviews/${id}`);
       reviews.value = reviews.value.filter(r => r.id !== id);
-      // Cập nhật lại localStorage
-          showToast('success', 'Xoá thành công!');
-
       const readIds = loadReadStatusFromStorage().filter(rid => rid !== id);
       saveReadStatusToStorage(readIds);
-    })
-    .catch(err => {
+      showToast('success', 'Xoá thành công!');
+    } catch (err) {
       console.error('Xoá thất bại:', err);
-          showToast('danger', 'Xoá thất bại!');
-
-    });
+      showToast('danger', 'Xoá thất bại!');
+    }
+  });
 }
 
 function deleteAll() {
-  if (!confirm('Bạn có chắc chắn muốn xoá TẤT CẢ đánh giá?')) return;
-  Promise.all(reviews.value.map(r => axios.delete(`/reviews/${r.id}`)))
-    .then(() => {
+  openConfirmModal('Bạn có chắc chắn muốn xoá TẤT CẢ đánh giá?', async () => {
+    try {
+      await Promise.all(reviews.value.map(r => axios.delete(`/reviews/${r.id}`)));
       reviews.value = [];
       localStorage.removeItem('readReviews');
-          showToast('success', 'Xoá thành công!');
-
-    })
-    .catch(err => {console.error('Lỗi xoá tất cả:', err)
-          showToast('danger', 'Xoá thất bại!');
-
-    });
+      showToast('success', 'Xoá thành công!');
+    } catch (err) {
+      console.error('Lỗi xoá tất cả:', err);
+      showToast('danger', 'Xoá thất bại!');
+    }
+  });
 }
 
+// Đánh dấu đã đọc
 function markAsRead(id) {
   const review = reviews.value.find(r => r.id === id);
   if (review && !review.isRead) {
@@ -176,6 +194,7 @@ function markAllAsRead() {
   saveReadStatusToStorage(allIds);
 }
 
+// Tìm kiếm
 const filteredReviews = computed(() => {
   if (!searchQuery.value) return reviews.value;
   const q = searchQuery.value.toLowerCase();
@@ -188,6 +207,10 @@ const filteredReviews = computed(() => {
     formatDate(b.createdAt).toLowerCase().includes(q)
   );
 });
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('vi-VN');
+}
 
 onMounted(loadReviews);
 </script>

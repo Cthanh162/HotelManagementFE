@@ -1,5 +1,7 @@
 <template>
   <main class="main-content mt-0">
+        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg"
          style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg');
                 background-position: top;">
@@ -51,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '@/config';
 
@@ -61,6 +63,25 @@ const form = ref({
   email: '',
   password: ''
 });
+const toastAction = ref('');
+const toastMessage = ref('');
+const toastVisible = ref(false);
+
+function showToast(action, message) {
+  toastAction.value = '';
+  toastVisible.value = false;
+  toastMessage.value = '';
+
+  nextTick(() => {
+    toastAction.value = action;
+    toastMessage.value = message;
+    toastVisible.value = true;
+
+    setTimeout(() => {
+      toastVisible.value = false;
+    }, 3000);
+  });
+}
 const confirmPassword = ref('');
 const error = ref(null);
 
@@ -74,11 +95,14 @@ async function submit() {
 
   try {
     await axios.post('/signup', form.value);
-    alert('Đăng ký thành công!');
-    router.push('/signin');
+    showToast('success', 'Đăng kí thành công.');
+    setTimeout(() => {
+        router.push('/signin');
+    }, 2000);
   } catch (err) {
     console.error('Lỗi đăng ký:', err);
-    error.value = err?.response?.data?.message || 'Đăng ký thất bại';
+    showToast('danger', 'Đăng ký thất bại.');
+    // error.value = err?.response?.data?.message || 'Đăng ký thất bại';
   }
 }
 </script>

@@ -1,6 +1,7 @@
 <template>
   <div class="container py-4">
-     <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+
     <h4 class="mb-3">Danh sách khách hàng</h4>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -41,7 +42,7 @@
             <td>{{ user.address }}</td>
             <td class="text-center">
               <button class="btn btn-primary btn-sm me-1" @click="openEditForm(user)">Sửa</button>
-              <button class="btn btn-danger btn-sm" @click="deleteUser(user.userId)">Xóa</button>
+              <button class="btn btn-danger btn-sm" @click="deleteUser(user.userId)">Xoá</button>
             </td>
           </tr>
         </tbody>
@@ -94,7 +95,6 @@
                 <label class="form-label">Số điện thoại</label>
                 <input class="form-control" v-model="form.phone" />
               </div>
-
               <div class="col-md-6" v-if="!isEdit">
                 <label class="form-label">Mật khẩu</label>
                 <input class="form-control" v-model="form.password" type="password" />
@@ -112,15 +112,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Xác nhận xoá -->
+    <ConfirmModal
+      v-if="showConfirmModal"
+      :message="confirmMessage"
+      @confirm="handleConfirm"
+      @close="showConfirmModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from '@/config';
-// import BaseToast from '@/components/BaseToast.vue';
-const emit = defineEmits(['showToast']);
 import ToastContainer from '@/components/Toast.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
+
+// const emit = defineEmits(['showToast']);
 
 const toastAction = ref('');
 const toastMessage = ref('');
@@ -135,13 +144,12 @@ function showToast(action, message) {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
-
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
   });
 }
-const toastRef = ref(null);
+
 const users = ref([]);
 const entriesPerPage = ref(10);
 const currentPage = ref(1);
@@ -159,6 +167,22 @@ const form = ref({
   fullName: ''
 });
 
+// Modal xác nhận xoá
+const showConfirmModal = ref(false);
+const confirmMessage = ref('');
+const confirmAction = ref(null);
+
+function openConfirmModal(message, action) {
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  showConfirmModal.value = true;
+}
+
+function handleConfirm() {
+  showConfirmModal.value = false;
+  if (confirmAction.value) confirmAction.value();
+}
+
 onMounted(() => {
   refreshUsers();
 });
@@ -168,7 +192,6 @@ function refreshUsers() {
     .then(res => users.value = res.data.data || [])
     .catch(err => {
       console.error('Lỗi khi lấy danh sách user:', err);
-      toastRef.value?.showToast?.('Không thể tải danh sách người dùng', 'error');
     });
 }
 
@@ -222,18 +245,14 @@ async function submitForm() {
     if (isEdit.value) {
       await axios.put(`/users/${form.value.userId}`, form.value);
       showToast('success', 'Cập nhật thành công!');
-
-      emit('showToast', 'success', 'Cập nhật người dùng thành công');
     } else {
       await axios.post('/users', form.value);
       showToast('success', 'Thêm mới thành công!');
-      emit('showToast', 'success', 'Tạo người dùng mới thành công');
     }
     closeModal();
     refreshUsers();
   } catch (err) {
     let msg = 'Đã xảy ra lỗi';
-   showToast('danger', 'Đã xảy ra lỗi');
     if (err.response?.status === 422) {
       const errors = err.response.data.errors;
       const first = Object.values(errors)?.[0]?.[0];
@@ -241,28 +260,21 @@ async function submitForm() {
     } else {
       msg = err.response?.data?.message || msg;
     }
-
-    await nextTick(); // ensure toastRef is ready
-    toastRef.value?.showToast?.(msg, 'error');
-    showToast('danger', 'Yêu cầu nhập đầy đủ thông tin');
+    showToast('danger', msg);
   }
 }
 
 function deleteUser(id) {
-  if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
-  axios.delete(`/users/${id}`)
-    .then(() => {
+  openConfirmModal('Bạn có chắc chắn muốn xoá người dùng này?', async () => {
+    try {
+      await axios.delete(`/users/${id}`);
       users.value = users.value.filter(u => u.userId !== id);
       showToast('success', 'Xoá thành công!');
-      emit('showToast', 'success', 'Xoá thành công');
-    })
-    .catch(err => {
-      console.log(err);
-      showToast('success', 'Xoá thất bại!');
-
-      emit('showToast', 'danger', 'Xoá thất bại');
-
-    });
+    } catch (err) {
+      console.error(err);
+      showToast('danger', 'Xoá thất bại!');
+    }
+  });
 }
 </script>
 
@@ -270,6 +282,5 @@ function deleteUser(id) {
 .toast {
   min-width: 250px;
   animation: fadein 0.3s ease-in-out;
-  position: relative;
 }
 </style>
