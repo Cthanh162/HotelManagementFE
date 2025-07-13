@@ -44,7 +44,7 @@
 
   <div class="mt-3 text-center">
     <button class="btn btn-primary" @click="confirmUpload" >Xác nhận</button>
-    <button class="btn btn-danger" @click="cancelBooking">Xác nhận huỷ</button>
+    <button class="btn btn-danger" style="margin-left: 20px;" @click="cancelBooking">Huỷ</button>
   </div>
 </div>
 
@@ -212,9 +212,9 @@ function confirmUpload() {
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '---';
-  return new Date(dateStr).toLocaleString('vi-VN');
+  return new Date(dateStr).toLocaleDateString('vi-VN'); // chỉ lấy ngày, không lấy giờ
 }
+
 
 function formatCurrency(val) {
   if (!val) return '0 đ';

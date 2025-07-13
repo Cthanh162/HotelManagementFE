@@ -167,8 +167,10 @@ function submitReview() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleString('vi-VN');
+  return new Date(dateStr).toLocaleDateString('vi-VN');
 }
+
+
 
 function formatCurrency(val) {
   return Number(val || 0).toLocaleString('vi-VN') + ' đ';

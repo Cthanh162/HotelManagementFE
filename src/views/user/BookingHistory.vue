@@ -32,7 +32,7 @@
                 </button>
                 <button
                   class="btn btn-outline-danger btn-sm mt-2 ms-2"
-                  v-if="booking.status !== 'cancelled' && booking.paymentStatus !== 'paid' && booking.status !== 'timeout'"
+                  v-if="booking.status !== 'cancelled' && booking.paymentStatus !== 'paid' && booking.status !== 'timeout' && booking.paymentStatus !=='reject' && booking.paymentStatus !=='cancelled'"
                   @click="openConfirmPopup(booking)"
                 >
                   Huỷ đặt
@@ -45,11 +45,12 @@
     </div>
 
     <!-- Confirm Modal -->
-    <ConfirmModal
-      v-if="showConfirmModal"
-      @confirm="handleConfirmCancel"
-      @close="showConfirmModal = false"
-    />
+ <ConfirmModal
+  v-if="showConfirmModal"
+  :message="confirmMessage"
+  @confirm="handleConfirmCancel"
+  @close="showConfirmModal = false"
+/>
   </div>
 
   <!-- Footer -->
@@ -63,7 +64,7 @@
         <span>• Email: <a href="mailto:chithanh1622003@gmail.com">chithanh1622003@gmail.com</a></span>
       </div>
       <div class="mt-3">
-        <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
+<a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
         <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
       </div>
     </div>
@@ -77,7 +78,7 @@ import axios from '@/config';
 import dayjs from 'dayjs';
 import ToastContainer from '@/components/Toast.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
-
+const confirmMessage = ref('');
 const bookings = ref([]);
 const toastAction = ref('');
 const toastMessage = ref('');
@@ -100,11 +101,6 @@ function showToast(action, message) {
       toastVisible.value = false;
     }, 3000);
   });
-}
-
-function openConfirmPopup(booking) {
-  bookingToCancel.value = booking;
-  showConfirmModal.value = true;
 }
 
 async function handleConfirmCancel() {
@@ -139,14 +135,19 @@ async function handleConfirmCancel() {
     showToast('danger', 'Có lỗi xảy ra khi huỷ đặt phòng.');
   }
 }
-
+function openConfirmPopup(booking) {
+  bookingToCancel.value = booking;
+  confirmMessage.value = `Bạn có chắc muốn hủy đặt phòng ?`;
+  showConfirmModal.value = true;
+}
 function viewDetail(id) {
   router.push(`/booking/${id}/detail`);
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleString('vi-VN');
+  return new Date(dateStr).toLocaleDateString('vi-VN'); // chỉ lấy ngày, không lấy giờ
 }
+
 
 function formatCurrency(val) {
   if (!val) return '0 đ';
@@ -161,7 +162,7 @@ function statusLabel(status) {
     case 'completed': return 'Đã trả phòng';
     case 'timeout': return 'Hết thời gian thanh toán';
     case 'reject': return 'Từ chối thanh toán';
-    default: return status;
+default: return status;
   }
 }
 

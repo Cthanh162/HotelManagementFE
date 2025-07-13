@@ -302,7 +302,6 @@ const totalPrice = computed(() => {
 
   return total;
 });
-
 function submitBooking() {
   const token = localStorage.getItem('accessToken');
   const user = JSON.parse(localStorage.getItem('user'));
@@ -310,15 +309,23 @@ function submitBooking() {
   if (!token || !user) {
     showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
     setTimeout(() => {
-        return router.push('/signin');
-      }, 1500);
-    
+      router.push('/signin');
+    }, 1500);
+    return; // ← Thêm dòng này để thoát sớm
+  }
+   const checkin = dayjs(booking.value.checkinTime);
+  const checkout = dayjs(booking.value.checkoutTime);
+  const nights = checkout.startOf('day').diff(checkin.startOf('day'), 'day');
+
+  if (nights <= 0) {
+    showToast('warning', 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày.');
+    return;
   }
 
   const payload = {
     roomId: room.value.roomId,
     userId: user.userId,
-    checkinTime: booking.value.checkinTime ,
+    checkinTime: booking.value.checkinTime,
     checkoutTime: booking.value.checkoutTime,
     totalPrice: totalPrice.value,
     Name: booking.value.guestName,
@@ -330,20 +337,18 @@ function submitBooking() {
   })
     .then(res => {
       const bookingId = res.data.data.id;
-      // emit('showToast', 'success', 'Đặt phòng thành công');
       showToast('success', 'Đặt phòng thành công.');
       setTimeout(() => {
-          router.push(`/booking/${bookingId}/payment`);
-        }, 1500);
-      
+        router.push(`/booking/${bookingId}/payment`);
+      }, 1500);
     })
     .catch(err => {
       console.error('Lỗi khi đặt phòng:', err);
       const message = err.response?.data?.message || 'Đặt phòng thất bại.';
       showToast('warning', message);
-      // alert(message);
     });
 }
+
 
 function submitReview() {
   const token = localStorage.getItem('accessToken');
@@ -388,7 +393,7 @@ function zoomImage(url) {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleString('vi-VN');
+  return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
 function formatCurrency(val) {

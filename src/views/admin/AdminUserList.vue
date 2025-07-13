@@ -6,17 +6,12 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-success" @click="openCreateForm">Thêm mới</button>
-      <input type="text" v-model="searchQuery" placeholder="Tìm theo tên, email, sđt, địa chỉ..." class="form-control w-auto" />
-    </div>
-
-    <div class="mb-3">
-      <label>
-        <select v-model="entriesPerPage" class="form-select form-select-sm w-auto d-inline-block">
-          <option value="5">5 entries per page</option>
-          <option value="10">10 entries per page</option>
-          <option value="20">20 entries per page</option>
-        </select>
-      </label>
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Tìm theo tên, email, sđt, địa chỉ..."
+        class="form-control w-auto"
+      />
     </div>
 
     <div class="table-responsive">
@@ -49,11 +44,11 @@
       </table>
     </div>
 
-    <!-- Pagination -->
+    <!-- Phân trang bo tròn giống ảnh -->
     <nav>
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <a class="page-link" href="#" @click.prevent="currentPage--">Trước</a>
+          <a class="page-link" href="#" @click.prevent="currentPage--">&laquo;</a>
         </li>
         <li
           class="page-item"
@@ -64,7 +59,7 @@
           <a class="page-link" href="#" @click.prevent="currentPage = page">{{ page }}</a>
         </li>
         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-          <a class="page-link" href="#" @click.prevent="currentPage++">Sau</a>
+          <a class="page-link" href="#" @click.prevent="currentPage++">&raquo;</a>
         </li>
       </ul>
     </nav>
@@ -128,8 +123,6 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
-
-// const emit = defineEmits(['showToast']);
 
 const toastAction = ref('');
 const toastMessage = ref('');
@@ -282,5 +275,31 @@ function deleteUser(id) {
 .toast {
   min-width: 250px;
   animation: fadein 0.3s ease-in-out;
+}
+
+/* Phân trang tròn giống ảnh */
+.pagination .page-link {
+  border-radius: 50% !important;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  line-height: 40px;
+  text-align: center;
+  margin: 0 4px;
+  border: none;
+  color: #444;
+  background-color: #f1f1f1;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #5567ff;
+  color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+  opacity: 0.4;
+  pointer-events: none;
 }
 </style>

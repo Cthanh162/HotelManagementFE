@@ -17,8 +17,8 @@
             <th>Ảnh</th>
             <th>Video</th>
             <th>Loại phòng</th>
-            <th>Người lớn</th>
-            <th>Trẻ em</th>
+            <th>Số lượng</th>
+            <th>Trạng thái</th>
             <th>Giá phòng</th>
             <th>Mô tả</th>
             <th>Thao tác</th>
@@ -36,8 +36,8 @@
               <button v-if="room.roomVideo" @click="viewVideo(room.roomVideo)" class="btn btn-sm btn-outline-primary">Xem video</button>
             </td>
             <td>{{ room.roomType?.name }}</td>
-            <td>{{ room.adults }}</td>
-            <td>{{ room.children }}</td>
+            <td>{{ room.capacity }}</td>
+            <td>{{ statusLabel( room.status)}}</td>
             <td>{{ Number(room.price).toLocaleString() }} VND</td>
             <td><a href="#" @click.prevent="viewRoom(room)">Xem</a></td>
             <td class="text-center">
@@ -73,6 +73,7 @@
       <div class="modal-content modal-scrollable">
         <h3>{{ selectedRoom.roomName }}</h3>
         <p><strong>Loại phòng:</strong> {{ selectedRoom.roomType?.name }}</p>
+        <p><strong>Trạng thái: </strong>{{ statusLabel( selectedRoom.status)}}</p>
         <p><strong>Sức chứa:</strong> {{ selectedRoom.capacity }} người</p>
         <p><strong>Người lớn:</strong> {{ selectedRoom.adults }} - <strong>Trẻ em:</strong> {{ selectedRoom.children }}</p>
         <p><strong>Giá:</strong> {{ Number(selectedRoom.price).toLocaleString() }} VND</p>
@@ -139,8 +140,8 @@
             <label>Trạng thái:</label>
             <select v-model="form.status" class="form-control" required>
               <option value="available">Đang mở</option>
-              <option value="Booked">Tạm khóa</option>
-              <option value="Maintenance">Bảo trì</option>
+              <option value="locked">Tạm khóa</option>
+      
             </select>
           </div>
           <div class="form-group">
@@ -407,6 +408,13 @@ function confirmDelete(id) {
       console.error(err);
     }
   });
+}
+function statusLabel(status) {
+  switch (status) {
+    case 'available': return 'Đang mở';
+    case 'locked': return 'Tạm khóa';
+    default: return '---';
+  }
 }
 
 function viewRoom(room) {
