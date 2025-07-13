@@ -3,8 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import Signup from "../views/Signup.vue";
 import Signin from "../views/Signin.vue";
-
-
+import axios from '@/config';
 import UserLayout from "../layout/UserLayout.vue";
 import AdminLayout from "../layout/AdminLayout.vue";
 
@@ -59,19 +58,38 @@ const router = createRouter({
   routes,
   linkActiveClass: "active",
 });
+router.beforeEach(async (to, from, next) => {
+  const token = localStorage.getItem("accessToken");
+      console.log("âjaja",token)
 
-router.beforeEach((to, from, next) => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  if (to.path.startsWith("/admin")) {
+    if (!token) {
+      localStorage.clear();
 
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
-
-  if (requiresAdmin) {
-    if (!user || !user.roles?.includes("admin")) {
-      return next("signin");
+      return next("/signin");
     }
+
+    try {
+      const res = await axios.get("/user", {
+        headers: {
+          Authorization: `Bearer ${token}` // lấy ra tt của user đn hiện tại
+        },
+      });
+
+      const roles = res.data.roles?.map(r => r.roleName) || [];
+      console.log("ssssss",roles)
+      if (!roles.includes("admin")) {
+        localStorage.clear();
+        return next("/signin");
+      }
+
+      next();
+    } catch (err) {
+      console.error("Không lấy được thông tin user:", err);
+      return next("/signin");
+    }
+  } else {
+    next();
   }
-
-  next();
 });
-
 export default router;

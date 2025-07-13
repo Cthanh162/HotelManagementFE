@@ -1,11 +1,8 @@
 <template>
   <div class="container py-5" v-if="room">
     <div class="card shadow-sm p-4">
-    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
-
-
-      <!-- Header -->
-        <h2 class="mb-2">{{ room.roomName }}</h2>
+      <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+      <h2 class="mb-2">{{ room.roomName }}</h2>
       <div class="d-flex justify-content-between align-items-start flex-wrap">
         <div>
           <p><strong>Loại phòng:</strong> {{ room.roomType }}</p>
@@ -14,7 +11,6 @@
           <p><strong>Trẻ em:</strong> {{ room.children }}</p>
           <p><strong>Sức chứa:</strong> {{ room.capacity }}</p>
           <p><strong>Giá:</strong> {{ formatCurrency(room.price) }} VND / đêm</p>
-          
         </div>
         <div class="text-end">
           <p style="text-align: left;"><strong>Khách sạn:</strong> {{ room.hotelId }}</p>
@@ -63,23 +59,11 @@
           <div class="row mb-3">
             <div class="col-md-6">
               <label>Ngày đến:</label>
-              <!-- <input type="datetime-local" v-model="booking.checkinTime" class="form-control" required /> -->
-             <input
-                type="date"
-                v-model="booking.checkinTime"
-                class="form-control"
-                :min="booking.checkinTime || minDate"
-              />
+              <input type="date" v-model="booking.checkinTime" class="form-control" :min="minDate" />
             </div>
             <div class="col-md-6">
               <label>Ngày đi:</label>
-              <input
-                type="date"
-                v-model="booking.checkoutTime"
-                class="form-control"
-                :min="booking.checkinTime || minDate"
-                required
-              />
+              <input type="date" v-model="booking.checkoutTime" class="form-control" :min="booking.checkinTime || minDate" required />
             </div>
           </div>
 
@@ -91,17 +75,13 @@
             <label>Số điện thoại:</label>
             <input type="text" v-model="booking.phone" class="form-control" required />
           </div>
-          <!-- <div class="mb-3">
-            <label>CCCD:</label>
-            <input type="text" v-model="booking.identityNumber" class="form-control" required />
-          </div> -->
 
           <div class="mb-3">
             <p><strong>Giá tạm tính:</strong> {{ totalPrice.toLocaleString() }} VND</p>
           </div>
 
           <button class="btn btn-primary">Đặt phòng</button>
-          <router-link to="/rooms" class="btn btn-secondary" style="margin-left: 10px;">Quay lại</router-link>
+          <router-link to="/rooms" class="btn btn-secondary ms-2">Quay lại</router-link>
         </form>
       </div>
     </div>
@@ -152,42 +132,20 @@
       </div>
     </div>
   </div>
-   <!-- Footer -->
-<footer class="bg-light text-center text-muted mt-5 py-4 border-top">
-  <div class="container">
-    <!-- <hr class="mb-3" style="width: 60px; border-top: 3px solid #444;" /> -->
-
-    <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
-    <p class="mb-1">Số 46 Phạm Ngọc Thạch , Trung Tự , Đống Đa ,Hà Nội , Điện thoại</p>
-
-    <div class="d-flex flex-wrap justify-content-center gap-3">
-      <span>Điện thoại: <strong>+84 965540033</strong></span>
-      <span>• Fax: <strong>+84 965540033</strong></span>
-      <span>• Email: <a href="mailto:mhres.hanjw.reservation@marriott.com">chithanh1622003@gmail.com</a></span>
-    </div>
-
-    <div class="mt-3">
-      <a href="#" class="me-3 text-dark fs-4"><i class="fab fa-facebook-f"></i></a>
-      <a href="#" class="text-dark fs-4"><i class="fab fa-instagram"></i></a>
-    </div>
-  </div>
-</footer>
 </template>
 
 <script setup>
-import { ref, onMounted, computed,nextTick,watch } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import dayjs from 'dayjs';
-// import BaseToast from '@/components/BaseToast.vue';
-// const emit = defineEmits(['showToast']);
 import ToastContainer from '@/components/Toast.vue';
+
 const route = useRoute();
 const router = useRouter();
 const room = ref(null);
 const reviews = ref([]);
 const minDate = ref(new Date().toISOString().split("T")[0]);
-// const toastRef = ref(null);
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
@@ -207,7 +165,8 @@ function showToast(action, message) {
     }, 3000);
   });
 }
-// const toastRef = ref(null);
+
+
 const zoomedImage = ref(null);
 const showReviewPopup = ref(false);
 const services = ref([]);
@@ -229,46 +188,17 @@ watch(() => booking.value.checkinTime, (val) => {
     }
   }
 });
+
 const reviewForm = ref({ rating: '', des: '' });
-// function validateCheckinTime() {
-//   const selected = new Date(booking.value.checkin);
-//   const now = new Date();
 
-//   if (selected < now) {
-//     toastRef.value?.showToast?.('Không được chọn giờ trong quá khứ', 'warning');
-//     booking.value.checkin = now.toISOString().slice(0, 16);
-//   }
-// }
-// function getCurrentMinDateTime() {
-//   const now = new Date();
-//   now.setSeconds(0, 0);
-//   return now.toISOString().slice(0, 16);
-// }
-// watch(() => booking.value.checkin, (val) => {
-//   const selectedDate = new Date(val);
-//   const now = new Date();
-//   const isToday =
-//     selectedDate.getFullYear() === now.getFullYear() &&
-//     selectedDate.getMonth() === now.getMonth() &&
-//     selectedDate.getDate() === now.getDate();
-
-//   // if (isToday) {
-//   //   minDateTime.value = getCurrentMinDateTime();
-//   // } else {
-//   //   minDateTime.value = selectedDate.toISOString().slice(0, 16);
-//   // }
-// });
 onMounted(async () => {
   const id = route.params.id;
-
   try {
     const res = await axios.get(`/rooms/${id}`);
     room.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải chi tiết phòng:', err);
     showToast('danger', 'Không thể tải thông tin phòng.');
-
-    // alert('Không thể tải thông tin phòng.');
   }
 
   try {
@@ -276,44 +206,41 @@ onMounted(async () => {
     reviews.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải đánh giá:', err);
-    // alert('Không thể tải đánh giá.');
+  }
+
+  try {
+    const res = await axios.get(`/rooms/${id}/services`);
+    services.value = res.data.data || [];
+  } catch (err) {
+    console.error('Lỗi khi lấy dịch vụ phòng:', err);
   }
 
   if (route.query.review === '1') {
     showReviewPopup.value = true;
   }
-  try {
-  const res = await axios.get(`/rooms/${id}/services`);
-  services.value = res.data.data || [];
-} catch (err) {
-  console.error('Lỗi khi lấy dịch vụ phòng:', err);
-}
 });
 
 const totalPrice = computed(() => {
   if (!room.value || !booking.value.checkinTime || !booking.value.checkoutTime) return 0;
-
   const basePrice = Number(room.value.price);
   const checkin = dayjs(booking.value.checkinTime);
   const checkout = dayjs(booking.value.checkoutTime);
-
   const nights = checkout.startOf('day').diff(checkin.startOf('day'), 'day');
-  const total = Math.max(nights, 1) * basePrice;
-
-  return total;
+  return Math.max(nights, 1) * basePrice;
 });
+
 function submitBooking() {
   const token = localStorage.getItem('accessToken');
   const user = JSON.parse(localStorage.getItem('user'));
-
   if (!token || !user) {
     showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
     setTimeout(() => {
       router.push('/signin');
     }, 1500);
-    return; // ← Thêm dòng này để thoát sớm
+    return;
   }
-   const checkin = dayjs(booking.value.checkinTime);
+
+  const checkin = dayjs(booking.value.checkinTime);
   const checkout = dayjs(booking.value.checkoutTime);
   const nights = checkout.startOf('day').diff(checkin.startOf('day'), 'day');
 
@@ -349,7 +276,6 @@ function submitBooking() {
     });
 }
 
-
 function submitReview() {
   const token = localStorage.getItem('accessToken');
   if (!token) {
@@ -378,16 +304,15 @@ function submitReview() {
       alert(message);
     });
 }
+
 function displayStatus(status) {
   switch (status) {
-    case 'available':
-      return 'Phòng có thể đặt';
-    case 'booked':
-      return 'Đã được đặt';
-    default:
-      return status;
+    case 'available': return 'Phòng có thể đặt';
+    case 'booked': return 'Đã được đặt';
+    default: return status;
   }
 }
+
 function zoomImage(url) {
   zoomedImage.value = url;
 }

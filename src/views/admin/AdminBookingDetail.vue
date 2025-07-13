@@ -1,6 +1,6 @@
 <template>
   <div class="container py-5">
-        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
     <div v-if="booking" class="card shadow-sm p-4">
       <h3 class="mb-4">Chi tiết đơn đặt phòng</h3>
@@ -30,13 +30,10 @@
           <div v-else class="text-muted">Chưa có</div>
         </div>
       </div>
+
       <div class="mt-4">
-        <router-link :to="`/admin/bookings/${booking.id}/edit`" class="btn btn-primary">
-          Cập nhật đơn
-        </router-link>
-        <router-link to="/admin/bookings" class="btn btn-secondary ms-2">
-          Quay lại danh sách
-        </router-link>
+        <router-link :to="`/admin/bookings/${booking.id}/edit`" class="btn btn-primary">Cập nhật đơn</router-link>
+        <router-link to="/admin/bookings" class="btn btn-secondary ms-2">Quay lại danh sách</router-link>
         <button
           v-if="booking.status === 'confirmed' && booking.paymentStatus === 'paid'"
           @click="handleCheckout"
@@ -45,45 +42,62 @@
           Checkout
         </button>
       </div>
+
       <!-- Modal nhập thời gian thực tế -->
-    <div v-if="showTimeModal" class="modal-backdrop" @click.self="showTimeModal = false">
-      <div class="modal-content">
-        <h5>Nhập thời gian checkout thực tế</h5>
-        <input type="datetime-local" v-model="actualCheckoutTime" class="form-control my-3" />
-        <div class="text-end">
-          <button class="btn btn-secondary me-2" @click="showTimeModal = false">Huỷ</button>
-          <button class="btn btn-primary" @click="compareCheckoutTime">Xác nhận</button>
+      <div v-if="showTimeModal" class="modal-backdrop" @click.self="showTimeModal = false">
+        <div class="modal-content">
+          <h5>Nhập thời gian checkout thực tế</h5>
+          <input type="datetime-local" v-model="actualCheckoutTime" class="form-control my-3" />
+          <div class="text-end">
+            <button class="btn btn-secondary me-2" @click="showTimeModal = false">Huỷ</button>
+            <button class="btn btn-primary" @click="compareCheckoutTime">Xác nhận</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal hiển thị phụ thu -->
+      <div v-if="showFeeModal" class="modal-backdrop" @click.self="showFeeModal = false">
+        <div class="modal-content">
+          <h5>Phụ thu trễ giờ</h5>
+          <p>
+            Checkout trễ {{ delayMinutes }} phút. Áp dụng phụ thu:
+            <strong>{{ formatCurrency(lateFee) }}</strong>
+          </p>
+          <div class="text-end">
+            <button class="btn btn-secondary me-2" @click="showFeeModal = false">Huỷ</button>
+            <button class="btn btn-success" @click="sendCheckout(lateFee)">Xác nhận Checkout</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal hiển thị phụ thu -->
-    <div v-if="showFeeModal" class="modal-backdrop" @click.self="showFeeModal = false">
-      <div class="modal-content">
-        <h5>Phụ thu trễ giờ</h5>
-        <p>
-          Checkout trễ {{ delayMinutes }} phút. Áp dụng phụ thu:
-          <strong>{{ formatCurrency(lateFee) }}</strong>
-        </p>
-        <div class="text-end">
-          <button class="btn btn-secondary me-2" @click="showFeeModal = false">Huỷ</button>
-          <button class="btn btn-success" @click="sendCheckout(lateFee)">Xác nhận Checkout</button>
-        </div>
-      </div>
-    </div>
-    </div>
     <div v-else class="text-center text-muted">Đang tải dữ liệu...</div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted,nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
+
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
+
+const booking = ref(null);
+const route = useRoute();
+const router = useRouter();
+const id = route.params.id;
+
+const showTimeModal = ref(false);
+const showFeeModal = ref(false);
+const actualCheckoutTime = ref(new Date().toISOString().slice(0, 16));
+const lateFee = ref(0);
+const delayMinutes = ref(0);
+
+// ✅ Lấy token từ localStorage
+const token = localStorage.getItem('accessToken');
 
 function showToast(action, message) {
   toastAction.value = '';
@@ -94,26 +108,11 @@ function showToast(action, message) {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
-
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
   });
 }
-const route = useRoute();
-const booking = ref(null);
-const id = route.params.id;
-const showTimeModal = ref(false);
-const showFeeModal = ref(false);
-const actualCheckoutTime = ref(new Date().toISOString().slice(0, 16));
-const lateFee = ref(0);
-const delayMinutes = ref(0);
-
-onMounted(() => {
-  axios.get(`/bookings/${id}`)
-    .then(res => booking.value = res.data.data)
-    .catch(err => console.error('Lỗi khi tải chi tiết:', err));
-});
 
 function formatDate(val) {
   return val ? new Date(val).toLocaleString('vi-VN') : '---';
@@ -122,7 +121,25 @@ function formatDate(val) {
 function formatCurrency(val) {
   return Number(val || 0).toLocaleString('vi-VN') + ' đ';
 }
-// const router = useRouter();
+
+onMounted(() => {
+  if (!token) {
+    router.push('/signin');
+    return;
+  }
+
+  axios.get(`/bookings/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => {
+      booking.value = res.data.data;
+      console.log(res.data); // ✅ dùng res để tránh eslint warning
+    })
+    .catch(err => {
+      console.error('Lỗi khi tải chi tiết:', err);
+      showToast('danger', 'Không tải được dữ liệu đơn!');
+    });
+});
 
 function handleCheckout() {
   actualCheckoutTime.value = new Date().toISOString().slice(0, 16);
@@ -137,7 +154,7 @@ function compareCheckoutTime() {
 
   if (delayMinutes.value > 10) {
     const hoursLate = Math.ceil(delayMinutes.value / 60);
-    lateFee.value = hoursLate * 50000; // ví dụ: 50k/giờ
+    lateFee.value = hoursLate * 50000; // 50k mỗi giờ
     showFeeModal.value = true;
   } else {
     sendCheckout(0);
@@ -150,18 +167,18 @@ function sendCheckout(fee = 0) {
   axios.put(`/bookings/${booking.value.id}/checkout`, {
     actualCheckoutTime: actualCheckoutTime.value,
     lateFee: fee
+  }, {
+    headers: { Authorization: `Bearer ${token}` }
   })
     .then(res => {
+      console.log(res.data); // ✅ dùng res
       showToast('success', 'Checkout thành công!');
-      console.log(res)
-      // alert(res.data.message || 'Checkout thành công!');
       booking.value.status = 'completed';
       showFeeModal.value = false;
     })
     .catch(err => {
       showToast('danger', 'Lỗi khi checkout!');
-      console.log(err)
-      // alert(err.response?.data?.message || 'Lỗi khi checkout.');
+      console.log(err);
     });
 }
 </script>
@@ -181,7 +198,6 @@ function sendCheckout(fee = 0) {
   justify-content: center;
   z-index: 999;
 }
-
 .modal-content {
   background: white;
   padding: 1.5rem;

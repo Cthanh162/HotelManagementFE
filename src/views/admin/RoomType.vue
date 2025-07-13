@@ -70,68 +70,83 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
-import axios from '@/config';
-import ToastContainer from '@/components/Toast.vue';
-import ConfirmModal from '@/components/ConfirmModal.vue';
+import { ref, onMounted, nextTick } from 'vue'
+import axios from '@/config'
+import ToastContainer from '@/components/Toast.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
+const token = localStorage.getItem('accessToken');
 
-const toastAction = ref('');
-const toastMessage = ref('');
-const toastVisible = ref(false);
+
+// Toast
+const toastAction = ref('')
+const toastMessage = ref('')
+const toastVisible = ref(false)
 
 function showToast(action, message) {
-  toastAction.value = '';
-  toastVisible.value = false;
-  toastMessage.value = '';
-
+  toastAction.value = ''
+  toastVisible.value = false
+  toastMessage.value = ''
   nextTick(() => {
-    toastAction.value = action;
-    toastMessage.value = message;
-    toastVisible.value = true;
+    toastAction.value = action
+    toastMessage.value = message
+    toastVisible.value = true
     setTimeout(() => {
-      toastVisible.value = false;
-    }, 3000);
-  });
+      toastVisible.value = false
+    }, 3000)
+  })
 }
 
-const roomTypes = ref([]);
-const showForm = ref(false);
-const editingType = ref(null);
-const showConfirmModal = ref(false);
-const confirmMessage = ref('');
-const confirmAction = ref(null);
+// State
+const roomTypes = ref([])
+const showForm = ref(false)
+const editingType = ref(null)
+const showConfirmModal = ref(false)
+const confirmMessage = ref('')
+const confirmAction = ref(null)
 
+// Form
 const form = ref({
   name: '',
   des: ''
-});
+})
 
+// Fetch dữ liệu
 function fetchRoomTypes() {
-  axios.get('/room-types').then(res => roomTypes.value = res.data.data);
+      axios.get('/room-types', {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(res => roomTypes.value = res.data.data)
+  .catch(() => showToast('danger', 'Không thể tải loại phòng'));
 }
 
+// Mở modal thêm
 function openAddModal() {
-  editingType.value = null;
-  form.value = { name: '', des: '' };
-  showForm.value = true;
+  editingType.value = null
+  form.value = { name: '', des: '' }
+  showForm.value = true
 }
 
+// Mở modal sửa
 function editType(type) {
-  editingType.value = type;
-  form.value = { name: type.name, des: type.des };
-  showForm.value = true;
+  editingType.value = type
+  form.value = { name: type.name, des: type.des }
+  showForm.value = true
 }
 
+// Đóng modal
 function closeForm() {
-  showForm.value = false;
+  showForm.value = false
 }
 
+// Submit form
 function submitForm() {
+  const token = localStorage.getItem('accessToken');
   const payload = { ...form.value };
   const url = editingType.value ? `/room-types/${editingType.value.id}` : '/room-types';
   const method = editingType.value ? 'put' : 'post';
 
-  axios[method](url, payload)
+  axios[method](url, payload, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
     .then(() => {
       showToast('success', editingType.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
       fetchRoomTypes();
@@ -143,10 +158,14 @@ function submitForm() {
     });
 }
 
+// Xác nhận xoá
 function confirmDelete(id) {
+  const token = localStorage.getItem('accessToken');
   openConfirmModal('Bạn có chắc muốn xoá loại phòng này?', async () => {
     try {
-      await axios.delete(`/room-types/${id}`);
+      await axios.delete(`/room-types/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       showToast('success', 'Xoá thành công!');
       fetchRoomTypes();
     } catch (err) {
@@ -156,6 +175,7 @@ function confirmDelete(id) {
   });
 }
 
+// Modal xác nhận
 function openConfirmModal(message, action) {
   confirmMessage.value = message;
   confirmAction.value = action;
@@ -167,7 +187,8 @@ function handleConfirm() {
   if (confirmAction.value) confirmAction.value();
 }
 
-onMounted(fetchRoomTypes);
+// Init
+onMounted(fetchRoomTypes)
 </script>
 
 <style scoped>

@@ -20,7 +20,7 @@
           <option value="year">Năm</option>
         </select>
       </div>
-      <div class="col-md-3 ">
+      <div class="col-md-3">
         <button class="btn btn-primary w-100 nomargin" @click="fetchStats">Thống kê</button>
       </div>
     </div>
@@ -72,11 +72,11 @@ import {
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 dayjs.extend(isoWeek);
 
+const token = localStorage.getItem('accessToken');
+
 const startOfWeek = dayjs().startOf('isoWeek').format('YYYY-MM-DD');
 const endOfWeek = dayjs().endOf('isoWeek').format('YYYY-MM-DD');
 
-console.log('Tuần hiện tại từ:', startOfWeek, 'đến', endOfWeek);
-// Filters mặc định (7 ngày gần nhất)
 const filters = ref({
   from: startOfWeek,
   to: endOfWeek,
@@ -108,7 +108,12 @@ const chartOptions = {
 };
 
 function fetchStats() {
-  axios.get('/stats/revenue', { params: filters.value })
+  axios.get('/stats/revenue', {
+    params: filters.value,
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
     .then(res => {
       stats.value = res.data;
       chartData.value = {
@@ -120,14 +125,16 @@ function fetchStats() {
         }]
       };
     })
-    .catch(() => alert('Lỗi khi lấy thống kê'));
+    .catch(err => {
+      console.error(err);
+      alert('Lỗi khi lấy thống kê');
+    });
 }
 
 function formatCurrency(val) {
   return Number(val || 0).toLocaleString('vi-VN') + ' đ';
 }
 
-// Gọi khi mounted
 onMounted(() => {
   fetchStats();
 });
@@ -137,7 +144,7 @@ onMounted(() => {
 table td {
   vertical-align: middle;
 }
-.nomargin{
-    margin-bottom:0 !important;
+.nomargin {
+  margin-bottom: 0 !important;
 }
 </style>

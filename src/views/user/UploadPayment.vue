@@ -1,54 +1,50 @@
 <template>
   <div class="container py-5" style="background-color: #fff; min-height: 100vh" v-if="booking">
-         <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
     <div class="row">
       <!-- Left: Bank Info & Upload + QR -->
       <div class="col-md-7">
-  <!-- Dòng chứa thông tin ngân hàng và mã QR -->
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-    <div>
-      <h5 class="mb-3">1. Tài khoản ngân hàng</h5>
-      <p><strong>Tên tài khoản:</strong> NGUYEN CHI THANH</p>
-      <p><strong>Số tài khoản:</strong> 8881602038888</p>
-      <p><strong>Ngân hàng:</strong> MB</p>
-      <div class="mt-1">
-        <strong>Thời gian giữ chỗ còn lại:</strong>
-        <span class="text-danger fw-bold">{{ countdown }}</span>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+          <div>
+            <h5 class="mb-3">1. Tài khoản ngân hàng</h5>
+            <p><strong>Tên tài khoản:</strong> NGUYEN CHI THANH</p>
+            <p><strong>Số tài khoản:</strong> 8881602038888</p>
+            <p><strong>Ngân hàng:</strong> MB</p>
+            <div class="mt-1">
+              <strong>Thời gian giữ chỗ còn lại:</strong>
+              <span class="text-danger fw-bold">{{ countdown }}</span>
+            </div>
+          </div>
+
+          <div class="text-center padding1">
+            <p class="fw-bold mb-2">Quét mã QR để thanh toán:</p>
+            <img
+              src="../../assets/img/qr.jpeg"
+              alt="QR Code"
+              class="img-fluid"
+              style="max-width: 180px;"
+            />
+          </div>
+        </div>
+
+        <div class="upload-box text-center mt-4" @click="triggerFileUpload">
+          <i class="fas fa-upload fa-2x mb-2"></i>
+          <p>Nhấn để chọn ảnh thanh toán</p>
+          <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" hidden />
+        </div>
+
+        <div v-if="previewImage" class="mt-3 text-center">
+          <p class="fw-bold">Ảnh đã chọn:</p>
+          <img :src="previewImage" alt="Ảnh thanh toán" class="img-thumbnail" style="max-width: 300px;" />
+        </div>
+
+        <div class="mt-3 text-center">
+          <button class="btn btn-primary" @click="confirmUpload">Xác nhận</button>
+          <button class="btn btn-danger" style="margin-left: 20px;" @click="cancelBooking">Huỷ</button>
+        </div>
       </div>
-    </div>
 
-    <!-- QR code bên phải -->
-    <div class="text-center padding1">
-      <p class="fw-bold mb-2">Quét mã QR để thanh toán:</p>
-      <img
-        src="../../assets/img/qr.jpeg"
-        alt="QR Code"
-        class="img-fluid"
-        style="max-width: 180px;"
-      />
-    </div>
-  </div>
-
-  <!-- Upload -->
-  <div class="upload-box text-center mt-4" @click="triggerFileUpload">
-    <i class="fas fa-upload fa-2x mb-2"></i>
-    <p>Nhấn để chọn ảnh thanh toán</p>
-    <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" hidden />
-  </div>
-
-  <div v-if="previewImage" class="mt-3 text-center">
-    <p class="fw-bold">Ảnh đã chọn:</p>
-    <img :src="previewImage" alt="Ảnh thanh toán" class="img-thumbnail" style="max-width: 300px;" />
-  </div>
-
-  <div class="mt-3 text-center">
-    <button class="btn btn-primary" @click="confirmUpload" >Xác nhận</button>
-    <button class="btn btn-danger" style="margin-left: 20px;" @click="cancelBooking">Huỷ</button>
-  </div>
-</div>
-
-      <!-- Right: Booking Info -->
       <div class="col-md-5">
         <div class="card bg-white text-dark p-3 shadow-sm">
           <h5 class="mb-3">Thông tin đặt phòng</h5>
@@ -70,7 +66,6 @@
     Đang tải thông tin đặt phòng...
   </div>
 
-  <!-- Footer -->
   <footer class="bg-light text-center text-muted mt-5 py-4 border-top">
     <div class="container">
       <h5 class="fw-bold mb-2">ChiThanhHotel</h5>
@@ -91,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted,nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 
@@ -109,6 +104,13 @@ const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
 const showCancelPopup = ref(false);
+
+const token = localStorage.getItem('accessToken');
+if (!token) {
+  showToast('danger', 'Bạn chưa đăng nhập');
+  router.push('/signin');
+}
+
 function showToast(action, message) {
   toastAction.value = '';
   toastVisible.value = false;
@@ -124,6 +126,7 @@ function showToast(action, message) {
     }, 3000);
   });
 }
+
 const countdown = ref('5:00');
 let timer = null;
 let secondsLeft = 300;
@@ -137,14 +140,15 @@ function startCountdown() {
 
     if (secondsLeft <= 0) {
       clearInterval(timer);
-      axios.post(`/bookings/${bookingId}/outTime`)
+      axios.post(`/bookings/${bookingId}/outTime`, null, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       showToast('warning', 'Hết thời gian giữ phòng. Bạn sẽ được chuyển về trang phòng.');
 
       if (booking.value?.room.roomId) {
-      setTimeout(() => {
-        router.push(`/room/${booking.value.room.roomId}`);
-      }, 2000);
-        
+        setTimeout(() => {
+          router.push(`/room/${booking.value.room.roomId}`);
+        }, 2000);
       }
     }
   }, 1000);
@@ -157,13 +161,15 @@ function triggerFileUpload() {
 function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   selectedFile.value = file;
   previewImage.value = URL.createObjectURL(file);
 }
+
 async function cancelBooking() {
   try {
-    await axios.post(`/bookings/${bookingId}/cancel-payment`);
+    await axios.post(`/bookings/${bookingId}/cancel-payment`, null, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     showToast('success', 'Huỷ thanh toán thành công');
     showCancelPopup.value = false;
 
@@ -172,17 +178,16 @@ async function cancelBooking() {
       setTimeout(() => {
         router.push(`/room/${roomId}`);
       }, 1500);
-      // router.push(`/room/${roomId}`);
     }
   } catch (err) {
     console.error('Lỗi huỷ thanh toán:', err);
     showToast('danger', 'Huỷ thanh toán thất bại');
   }
 }
+
 function confirmUpload() {
-   if (!selectedFile.value) {
-      showToast('warning', 'Yêu cầu upload ảnh thanh toán');
-    // alert('Yêu cầu upload ảnh thanh toán');
+  if (!selectedFile.value) {
+    showToast('warning', 'Yêu cầu upload ảnh thanh toán');
     return;
   }
 
@@ -190,19 +195,20 @@ function confirmUpload() {
   formData.append('paymentProof', selectedFile.value);
 
   axios.post(`/bookings/${bookingId}/upload-payment`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`
+    }
   })
     .then(() => {
-      // alert('Tải ảnh thanh toán thành công');
       showToast('success', 'Tải ảnh thanh toán thành công');
       emit('showToast', 'success', 'Đặt phòng thành công');
-      
+
       const roomId = booking.value?.room.roomId;
       if (roomId) {
         setTimeout(() => {
           router.push(`/room/${roomId}`);
         }, 1500);
-        // router.push(`/room/${roomId}`);
       }
     })
     .catch(err => {
@@ -212,9 +218,8 @@ function confirmUpload() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('vi-VN'); // chỉ lấy ngày, không lấy giờ
+  return new Date(dateStr).toLocaleDateString('vi-VN');
 }
-
 
 function formatCurrency(val) {
   if (!val) return '0 đ';
@@ -224,19 +229,18 @@ function formatCurrency(val) {
 onMounted(async () => {
   if (!bookingId) {
     showToast('danger', 'Không tìm thấy bookingId!');
-    // alert('Không tìm thấy bookingId!');
     return;
   }
 
   try {
-    const res = await axios.get(`/bookings/${bookingId}`);
+    const res = await axios.get(`/bookings/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     booking.value = res.data?.data || null;
     startCountdown();
   } catch (err) {
     console.error('Lỗi khi tải booking:', err);
     showToast('danger', 'Không thể tải thông tin đơn phòng');
-
-    // alert('Không thể tải thông tin đơn phòng');
   }
 });
 
@@ -257,7 +261,7 @@ onUnmounted(() => {
 .upload-box:hover {
   background-color: #f0f0f0;
 }
-.padding1{
+.padding1 {
   padding-right: 62px;
 }
 .modal {

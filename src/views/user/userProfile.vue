@@ -56,15 +56,22 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 
 const profile = ref({});
 const form = ref({});
 const userId = JSON.parse(localStorage.getItem('user'))?.userId || null;
+const token = localStorage.getItem('accessToken');
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
+const router = useRouter();
+
+if (!token) {
+  router.push('/signin');
+}
 
 function showToast(action, message) {
   toastAction.value = '';
@@ -81,15 +88,17 @@ function showToast(action, message) {
     }, 3000);
   });
 }
+
 const fetchProfile = async () => {
   try {
-    const res = await axios.post(`/users/${userId}`);
+    const res = await axios.post(`/users/${userId}`, null, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     profile.value = res.data.data;
     form.value = { ...profile.value };
   } catch (err) {
-    showToast('danger', 'Lỗi lấy thông tin user:',err);
-
-    // console.error('Lỗi lấy thông tin user:', err);
+    showToast('danger', 'Lỗi lấy thông tin user');
+    console.error('Lỗi lấy thông tin user:', err);
   }
 };
 
@@ -97,16 +106,14 @@ onMounted(fetchProfile);
 
 const updateProfile = async () => {
   try {
-    await axios.put(`/users/${userId}`, form.value);
+    await axios.put(`/users/${userId}`, form.value, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     showToast('success', 'Cập nhật thành công!');
-
-    // alert('Cập nhật thành công!');
     fetchProfile();
   } catch (err) {
     console.error('Lỗi cập nhật user:', err);
     showToast('danger', 'Cập nhật thất bại.');
-
-    // alert('Cập nhật thất bại.');
   }
 };
 

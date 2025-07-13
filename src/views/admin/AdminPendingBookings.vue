@@ -109,7 +109,7 @@ function showToast(action, message) {
 
 const currentPage = ref(1);
 const itemsPerPage = 5;
-
+const token = localStorage.getItem('accessToken');
 const bookings = ref([]);
 const searchQuery = ref('');
 const zoomedImage = ref(null);
@@ -132,7 +132,9 @@ function zoomImage(url) {
 
 // API
 function loadBookings() {
-  axios.get('/bookings/pending')
+  axios.get('/bookings/pending', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
     .then(res => {
       bookings.value = res.data.data;
       currentPage.value = 1;

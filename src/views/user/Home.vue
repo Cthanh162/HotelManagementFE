@@ -218,6 +218,7 @@ const totalPages = computed(() => {
   return Math.ceil(filteredRooms.value.length / itemsPerPage);
 });
 // const allRooms = ref([]);
+const token = localStorage.getItem('accessToken');
 const mostBookedRooms = ref([]);
 const topRatedRooms = ref([]);
 const filteredRooms = ref([]);
@@ -238,8 +239,9 @@ function renderStars(rating) {
   const empty = 5 - full - half;
   return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
 }
-
 function handleSearch() {
+  const token = localStorage.getItem('accessToken'); 
+
   axios.get('/rooms/search', {
     params: {
       q: searchQuery.value,
@@ -247,27 +249,37 @@ function handleSearch() {
       capacity: filters.value.capacity,
       minPrice: filters.value.minPrice,
       maxPrice: filters.value.maxPrice,
+    },
+    headers: {
+      Authorization: `Bearer ${token}`
     }
   }).then(res => {
     filteredRooms.value = res.data.data || [];
     showSearchResults.value = true;
-    console.log(filteredRooms.value)
+    console.log(filteredRooms.value);
     if (filteredRooms.value.length === 0) {
       showToast('warning', 'Không có dữ liệu phù hợp.');
     }
-
   }).catch(err => {
     console.error('Lỗi khi tìm kiếm:', err);
     showToast('danger', 'Lỗi khi tìm kiếm phòng!');
   });
 }
 
+
 onMounted(async () => {
   try {
     const [mostBookedRes, topRatedRes,roomTypesRes] = await Promise.all([
-      axios.get('/rooms/most-booked'),
-      axios.get('/rooms/top-rated'),
-      axios.get('/room-types')
+      axios.get('/rooms/most-booked', {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+
+      axios.get('/rooms/top-rated', {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
+      axios.get('/room-types', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
     ]);
 
     mostBookedRooms.value = mostBookedRes.data?.data || [];

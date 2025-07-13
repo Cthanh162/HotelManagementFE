@@ -44,7 +44,7 @@
       </table>
     </div>
 
-    <!-- Phân trang bo tròn giống ảnh -->
+    <!-- Phân trang -->
     <nav>
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -123,16 +123,18 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
+import { useRouter } from 'vue-router';
 
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
+const router = useRouter();
+const token = localStorage.getItem('accessToken');
 
 function showToast(action, message) {
   toastAction.value = '';
   toastVisible.value = false;
   toastMessage.value = '';
-
   nextTick(() => {
     toastAction.value = action;
     toastMessage.value = message;
@@ -160,7 +162,6 @@ const form = ref({
   fullName: ''
 });
 
-// Modal xác nhận xoá
 const showConfirmModal = ref(false);
 const confirmMessage = ref('');
 const confirmAction = ref(null);
@@ -177,14 +178,18 @@ function handleConfirm() {
 }
 
 onMounted(() => {
+  if (!token) return router.push('/signin');
   refreshUsers();
 });
 
 function refreshUsers() {
-  axios.get('/users')
+  axios.get('/users', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
     .then(res => users.value = res.data.data || [])
     .catch(err => {
       console.error('Lỗi khi lấy danh sách user:', err);
+      showToast('danger', 'Không thể tải danh sách người dùng');
     });
 }
 
@@ -235,11 +240,16 @@ function closeModal() {
 
 async function submitForm() {
   try {
+    if (!token) return router.push('/signin');
     if (isEdit.value) {
-      await axios.put(`/users/${form.value.userId}`, form.value);
+      await axios.put(`/users/${form.value.userId}`, form.value, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       showToast('success', 'Cập nhật thành công!');
     } else {
-      await axios.post('/users', form.value);
+      await axios.post('/users', form.value, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       showToast('success', 'Thêm mới thành công!');
     }
     closeModal();
@@ -260,7 +270,9 @@ async function submitForm() {
 function deleteUser(id) {
   openConfirmModal('Bạn có chắc chắn muốn xoá người dùng này?', async () => {
     try {
-      await axios.delete(`/users/${id}`);
+      await axios.delete(`/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       users.value = users.value.filter(u => u.userId !== id);
       showToast('success', 'Xoá thành công!');
     } catch (err) {
@@ -277,7 +289,6 @@ function deleteUser(id) {
   animation: fadein 0.3s ease-in-out;
 }
 
-/* Phân trang tròn giống ảnh */
 .pagination .page-link {
   border-radius: 50% !important;
   width: 40px;

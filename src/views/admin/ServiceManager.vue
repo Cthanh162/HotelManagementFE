@@ -81,128 +81,141 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
-import axios from '@/config';
-import ToastContainer from '@/components/Toast.vue';
-import ConfirmModal from '@/components/ConfirmModal.vue';
+import { ref, onMounted, computed, nextTick } from 'vue'
+import axios from '@/config'
+import ToastContainer from '@/components/Toast.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
-const toastAction = ref('');
-const toastMessage = ref('');
-const toastVisible = ref(false);
-
+// Toast
+const toastAction = ref('')
+const toastMessage = ref('')
+const toastVisible = ref(false)
+const token = localStorage.getItem('accessToken');
 function showToast(action, message) {
-  toastAction.value = '';
-  toastVisible.value = false;
-  toastMessage.value = '';
-
+  toastAction.value = ''
+  toastVisible.value = false
+  toastMessage.value = ''
   nextTick(() => {
-    toastAction.value = action;
-    toastMessage.value = message;
-    toastVisible.value = true;
-
+    toastAction.value = action
+    toastMessage.value = message
+    toastVisible.value = true
     setTimeout(() => {
-      toastVisible.value = false;
-    }, 3000);
-  });
+      toastVisible.value = false
+    }, 3000)
+  })
 }
 
-const services = ref([]);
-const showModal = ref(false);
-const isEdit = ref(false);
-const searchQuery = ref('');
+// State
+const services = ref([])
+const searchQuery = ref('')
+const showModal = ref(false)
+const isEdit = ref(false)
 const form = ref({
   id: null,
   name: '',
   status: 'active',
-  price: 0,
-});
+  price: 0
+})
 
-const showConfirmModal = ref(false);
-const confirmMessage = ref('');
-const confirmAction = ref(null);
+// Xác nhận xoá
+const showConfirmModal = ref(false)
+const confirmMessage = ref('')
+const confirmAction = ref(null)
+
 
 function fetchServices() {
-  axios.get('/services')
-    .then(res => services.value = res.data.data)
-    .catch(err => console.error('Lỗi khi lấy dịch vụ:', err));
+      axios.get('/services', {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(res => services.value = res.data.data)
+  .catch(() => showToast('danger', 'Không thể tải danh sách dịch vụ!'));
 }
 
 function openCreateForm() {
-  isEdit.value = false;
+  isEdit.value = false
   form.value = {
     id: null,
     name: '',
     status: 'active',
     price: 0
-  };
-  showModal.value = true;
+  }
+  showModal.value = true
 }
 
 function editService(service) {
-  isEdit.value = true;
-  form.value = { ...service };
-  showModal.value = true;
+  isEdit.value = true
+  form.value = { ...service }
+  showModal.value = true
 }
 
 function closeModal() {
-  showModal.value = false;
+  showModal.value = false
 }
 
 function saveService() {
   const payload = {
     name: form.value.name,
     status: form.value.status,
-    price: form.value.price || 0,
-  };
+    price: form.value.price || 0
+  }
 
   const request = isEdit.value
-    ? axios.put(`/services/${form.value.id}`, payload)
-    : axios.post('/services', payload);
+
+    ? axios.put(`/services/${form.value.id}`, payload ,{
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    
+    : axios.post('/services', payload ,{
+      headers: { Authorization: `Bearer ${token}` }
+    })
 
   request
     .then(() => {
-      showToast('success', isEdit.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
-      fetchServices();
-      closeModal();
+      showToast('success', isEdit.value ? 'Cập nhật thành công!' : 'Thêm mới thành công!')
+      fetchServices()
+      closeModal()
     })
     .catch(err => {
-      console.log(err);
-      showToast('danger', isEdit.value ? 'Cập nhật thất bại!' : 'Thêm mới thất bại!');
-    });
+      console.log(err)
+      showToast('danger', isEdit.value ? 'Cập nhật thất bại!' : 'Thêm mới thất bại!')
+    })
 }
 
 function confirmDelete(id) {
+  const token = localStorage.getItem('accessToken');
   openConfirmModal('Bạn có chắc muốn xoá dịch vụ này?', async () => {
     try {
-      await axios.delete(`/services/${id}`);
-      showToast('success', 'Xoá thành công!');
-      fetchServices();
+      await axios.delete(`/services/${id}`,{
+         headers: { Authorization: `Bearer ${token}` }
+      })
+      showToast('success', 'Xoá thành công!')
+      fetchServices()
     } catch (err) {
-      console.log(err);
-      showToast('danger', 'Xoá thất bại!');
+      console.log(err)
+      showToast('danger', 'Xoá thất bại!')
     }
-  });
+  })
 }
 
 function openConfirmModal(message, action) {
-  confirmMessage.value = message;
-  confirmAction.value = action;
-  showConfirmModal.value = true;
+  confirmMessage.value = message
+  confirmAction.value = action
+  showConfirmModal.value = true
 }
 
 function handleConfirm() {
-  showConfirmModal.value = false;
-  if (confirmAction.value) confirmAction.value();
+  showConfirmModal.value = false
+  if (confirmAction.value) confirmAction.value()
 }
 
+// Tìm kiếm
 const filteredServices = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase();
+  const keyword = searchQuery.value.trim().toLowerCase()
   return services.value.filter(s =>
     s.name?.toLowerCase().includes(keyword) ||
     s.status?.toLowerCase().includes(keyword) ||
     String(s.price).includes(keyword)
-  );
-});
+  )
+})
 
-onMounted(fetchServices);
+onMounted(fetchServices)
 </script>

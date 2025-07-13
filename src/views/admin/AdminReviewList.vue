@@ -72,11 +72,11 @@
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from '@/config';
 import ToastContainer from '@/components/Toast.vue';
 import ConfirmModal from '@/components/ConfirmModal.vue';
 
-// Toast
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
@@ -96,11 +96,13 @@ function showToast(action, message) {
   });
 }
 
-// State
+// Token kiểm tra login
+const token = localStorage.getItem('accessToken');
+const router = useRouter();
+
 const reviews = ref([]);
 const searchQuery = ref('');
 
-// Modal confirm
 const showConfirmModal = ref(false);
 const confirmMessage = ref('');
 const confirmAction = ref(null);
@@ -116,7 +118,6 @@ function handleConfirm() {
   if (confirmAction.value) confirmAction.value();
 }
 
-// LocalStorage: trạng thái đã đọc
 function loadReadStatusFromStorage() {
   try {
     return JSON.parse(localStorage.getItem('readReviews') || '[]');
@@ -129,9 +130,17 @@ function saveReadStatusToStorage(ids) {
   localStorage.setItem('readReviews', JSON.stringify(ids));
 }
 
-// Load dữ liệu
 function loadReviews() {
-  axios.get('/reviews')
+  if (!token) {
+    router.push('/signin');
+    return;
+  }
+
+  axios.get('/reviews', {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
     .then(res => {
       const readIds = loadReadStatusFromStorage();
       reviews.value = res.data.data.map(r => ({
@@ -142,14 +151,18 @@ function loadReviews() {
     .catch(err => {
       console.error('Lỗi khi tải reviews:', err);
       reviews.value = [];
+      showToast('danger', 'Không thể tải đánh giá!');
     });
 }
 
-// Xử lý xoá
 function deleteReview(id) {
   openConfirmModal('Bạn có chắc chắn muốn xoá đánh giá này?', async () => {
     try {
-      await axios.delete(`/reviews/${id}`);
+      await axios.delete(`/reviews/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       reviews.value = reviews.value.filter(r => r.id !== id);
       const readIds = loadReadStatusFromStorage().filter(rid => rid !== id);
       saveReadStatusToStorage(readIds);
@@ -164,18 +177,25 @@ function deleteReview(id) {
 function deleteAll() {
   openConfirmModal('Bạn có chắc chắn muốn xoá TẤT CẢ đánh giá?', async () => {
     try {
-      await Promise.all(reviews.value.map(r => axios.delete(`/reviews/${r.id}`)));
+      await Promise.all(
+        reviews.value.map(r =>
+          axios.delete(`/reviews/${r.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+        )
+      );
       reviews.value = [];
       localStorage.removeItem('readReviews');
       showToast('success', 'Xoá thành công!');
     } catch (err) {
       console.error('Lỗi xoá tất cả:', err);
-      showToast('danger', 'Xoá thất bại!');
+      showToast('danger', 'Xoá tất cả thất bại!');
     }
   });
 }
 
-// Đánh dấu đã đọc
 function markAsRead(id) {
   const review = reviews.value.find(r => r.id === id);
   if (review && !review.isRead) {
@@ -194,7 +214,6 @@ function markAllAsRead() {
   saveReadStatusToStorage(allIds);
 }
 
-// Tìm kiếm
 const filteredReviews = computed(() => {
   if (!searchQuery.value) return reviews.value;
   const q = searchQuery.value.toLowerCase();
