@@ -1,7 +1,8 @@
 <template>
   <main class="main-content mt-0">
-        <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
+    <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
+    <!-- Background header -->
     <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg"
          style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg');
                 background-position: top;">
@@ -16,6 +17,7 @@
       </div>
     </div>
 
+    <!-- Form đăng ký -->
     <div class="container">
       <div class="row mt-lg-n10 mt-md-n11 mt-n10 justify-content-center">
         <div class="col-xl-4 col-lg-5 col-md-7 mx-auto">
@@ -49,11 +51,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal xác minh -->
+    <div v-if="showVerifyModal" class="modal-backdrop" @click.self="showVerifyModal = false">
+      <div class="modal-content">
+        <h5 class="mb-3">Xác minh email</h5>
+        <p>Nhập mã xác minh được gửi tới email của bạn.</p>
+        <input v-model="verifyCode" class="form-control mb-3" type="text" maxlength="6" placeholder="Mã xác minh" />
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-secondary me-2" @click="showVerifyModal = false">Huỷ</button>
+          <button class="btn btn-primary" @click="confirmVerifyCode">Xác minh</button>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
 <script setup>
-import { ref,nextTick } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '@/config';
 
@@ -63,9 +78,15 @@ const form = ref({
   email: '',
   password: ''
 });
+const confirmPassword = ref('');
+const error = ref(null);
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
+
+const showVerifyModal = ref(false);
+const verifyCode = ref('');
+const pendingEmail = ref('');
 
 function showToast(action, message) {
   toastAction.value = '';
@@ -76,14 +97,11 @@ function showToast(action, message) {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
-
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
   });
 }
-const confirmPassword = ref('');
-const error = ref(null);
 
 async function submit() {
   error.value = null;
@@ -95,14 +113,28 @@ async function submit() {
 
   try {
     await axios.post('/signup', form.value);
-    showToast('success', 'Đăng kí thành công.');
-    setTimeout(() => {
-        router.push('/signin');
-    }, 2000);
+    showToast('success', 'Mã xác nhận đã được gửi tới email.');
+    pendingEmail.value = form.value.email;
+    showVerifyModal.value = true;
   } catch (err) {
-    console.error('Lỗi đăng ký:', err);
-    showToast('danger', 'Đăng ký thất bại.');
-    // error.value = err?.response?.data?.message || 'Đăng ký thất bại';
+    const message = err?.response?.data?.message || 'Đăng ký thất bại';
+    error.value = message;
+    showToast('danger', message);
+  }
+}
+
+async function confirmVerifyCode() {
+  try {
+    await axios.post('/verify-code', {
+      email: pendingEmail.value,
+      code: verifyCode.value
+    });
+    showToast('success', 'Xác minh thành công. Chuyển hướng...');
+    showVerifyModal.value = false;
+    setTimeout(() => router.push('/signin'), 2000);
+  } catch (err) {
+    const msg = err?.response?.data?.message || 'Xác minh thất bại';
+    showToast('danger', msg);
   }
 }
 </script>
@@ -115,5 +147,22 @@ async function submit() {
 .card {
   border-radius: 1rem;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 </style>
