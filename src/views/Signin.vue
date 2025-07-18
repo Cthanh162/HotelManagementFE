@@ -73,11 +73,10 @@ onBeforeUnmount(() => {
               >
                 <span class="mask bg-gradient-success opacity-6"></span>
                 <h4 class="mt-5 text-white font-weight-bolder position-relative">
-                  "Attention is the new currency"
+                  "Chào mừng bạn đến với ChiThanh Hotel"
                 </h4>
                 <p class="text-white position-relative">
-                  The more effortless the writing looks, the more effort the
-                  writer actually put into the process.
+                  Tìm kiếm và đặt phòng hiện đại.
                 </p>
               </div>
             </div>

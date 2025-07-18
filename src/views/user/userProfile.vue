@@ -46,8 +46,8 @@
 
       <!-- Buttons -->
       <div class="d-flex justify-content-end gap-2 mt-4">
-        <button type="submit" class="btn btn-success">CẬP NHẬT</button>
-        <button type="button" @click="resetForm" class="btn btn-outline-secondary">ĐÓNG</button>
+        <button type="submit" class="btn btn-success">Cập nhật</button>
+        <button type="button" @click="resetForm" class="btn btn-outline-secondary">Hủy</button>
       </div>
     </form>
   </div>

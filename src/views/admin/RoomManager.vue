@@ -79,9 +79,10 @@
         <div v-if="selectedRoom.services?.length">
           <p><strong>Dịch vụ / Tiện nghi:</strong></p>
           <ul>
-            <li v-for="s in selectedRoom.services" :key="s.id">
-              {{ s.name }} - {{ s.price ? Number(s.price).toLocaleString() + ' đ' : 'Miễn phí' }}
-            </li>
+            <li v-for="s in services.filter(s => s.status === 'active')" :key="s.id">
+  {{ s.name }}
+</li>
+
           </ul>
         </div>
 
@@ -162,15 +163,16 @@
             <textarea v-model="form.description" class="form-control" rows="5"></textarea>
           </div>
 
-          <div class="form-group">
+                    <div class="form-group">
             <label>Dịch vụ / Tiện nghi:</label>
             <div class="form-check" v-for="s in services" :key="s.id">
               <input class="form-check-input" type="checkbox" :value="s.id" v-model="form.services" :id="`service-${s.id}`" />
               <label class="form-check-label" :for="`service-${s.id}`">
-                {{ s.name }} - {{ s.price ? Number(s.price).toLocaleString() + ' đ' : 'Miễn phí' }}
+                {{ s.name }}
               </label>
             </div>
           </div>
+
 
           <div class="form-group">
             <label>Ảnh phòng:</label>
@@ -243,6 +245,11 @@ onMounted(() => {
   axios.get('/floors?hotelId=1', {
     headers: { Authorization: `Bearer ${token}` }
   }).then(res => (floors.value = res.data.data));
+  axios.get('/services?status=active', {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then(res => {
+    services.value = res.data.data;
+  });
 
   axios.get('/services', {
     headers: { Authorization: `Bearer ${token}` }
@@ -298,6 +305,12 @@ function handleVideoUpload(e) {
   form.value.videoFile = e.target.files[0];
 }
 async function submitForm() {
+  const totalPeople = form.value.adults + form.value.children;
+  if (totalPeople > form.value.capacity) {
+    showToast('danger', 'Vượt quá sức chứa của phòng!');
+    return;
+  }
+
   const formData = new FormData();
   if (editingRoom.value) formData.append('_method', 'PUT');
   for (const key in form.value) {
@@ -308,16 +321,23 @@ async function submitForm() {
     else formData.append(key, val ?? '');
   }
   const url = editingRoom.value ? `/rooms/${editingRoom.value.roomId}` : '/rooms';
-  await axios.post(url, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-      Authorization: `Bearer ${token}`
-    }
-  });
-  showToast('success', 'Thành công!');
-  fetchRooms();
-  closeForm();
+  try {
+    await axios.post(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    showToast('success', 'Thành công!');
+    fetchRooms();
+    closeForm();
+  } catch (err) {
+    showToast('danger', 'Lỗi khi thêm/sửa phòng.');
+    console.error(err);
+  }
 }
+
+
 function confirmDelete(id) {
   openConfirmModal('Bạn có chắc chắn muốn xoá phòng này?', async () => {
     try {

@@ -16,7 +16,6 @@
             <th>STT</th>
             <th>Tên dịch vụ</th>
             <th>Trạng thái</th>
-            <th>Giá (VND)</th>
             <th>Thao tác</th>
           </tr>
         </thead>
@@ -25,7 +24,6 @@
             <td class="text-center">{{ index + 1 }}</td>
             <td>{{ service.name }}</td>
             <td>{{ service.status === 'active' ? 'Hoạt động' : 'Tạm tắt' }}</td>
-            <td>{{ Number(service.price).toLocaleString() }}</td>
             <td class="text-center">
               <button class="btn btn-sm btn-primary me-2" @click="editService(service)">Sửa</button>
               <button class="btn btn-sm btn-danger" @click="confirmDelete(service.id)">Xoá</button>
@@ -50,14 +48,10 @@
                 <input v-model="form.name" class="form-control" required />
               </div>
               <div class="mb-3">
-                <label class="form-label">Giá (VND)</label>
-                <input v-model.number="form.price" type="number" class="form-control" min="0" />
-              </div>
-              <div class="mb-3">
                 <label class="form-label">Trạng thái</label>
                 <select v-model="form.status" class="form-select" required>
                   <option value="active">Hoạt động</option>
-                  <option value="inactive">Tạm tắt</option>
+                 <option value="inactive">Tạm tắt</option>
                 </select>
               </div>
             </div>
@@ -79,6 +73,7 @@
     />
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue'

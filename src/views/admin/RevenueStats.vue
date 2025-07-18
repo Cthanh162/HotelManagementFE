@@ -117,13 +117,16 @@ function fetchStats() {
     .then(res => {
       stats.value = res.data;
       chartData.value = {
-        labels: stats.value.map(s => s.label),
-        datasets: [{
-          label: 'Doanh thu',
-          backgroundColor: '#4e73df',
-          data: stats.value.map(s => s.revenue)
-        }]
-      };
+  labels: stats.value.map(s => s.label),
+  datasets: [{
+    label: 'Doanh thu',
+    backgroundColor: '#4e73df',
+    data: stats.value.map(s => s.revenue),
+    barThickness: 40,       // ← GIẢM giá trị này để cột hẹp lại
+    maxBarThickness: 50     // ← Không cho cột to hơn mức này
+  }]
+};
+
     })
     .catch(err => {
       console.error(err);

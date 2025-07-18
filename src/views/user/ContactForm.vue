@@ -87,12 +87,14 @@ function showToast(action, message) {
   });
 }
 
-// Gắn token vào header
-const getTokenConfig = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  }
-});
+const getTokenConfig = () => {
+  const token = localStorage.getItem('accessToken');
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  };
+};
 
 // Form & trạng thái
 const form = ref({ name: '', email: '', message: '' });

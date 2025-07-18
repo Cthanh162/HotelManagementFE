@@ -1,5 +1,6 @@
 <template>
-  <div class="container py-5" style="background-color: #fff; min-height: 100vh" v-if="booking">
+ <div class="container pt-3 pb-4" style="background-color: #fff; min-height: 100vh; margin-top: 40px;" v-if="booking">
+
     <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
     <div class="row">
@@ -28,7 +29,7 @@
           </div>
         </div>
 
-        <div class="upload-box text-center mt-4" @click="triggerFileUpload">
+        <div class="upload-box text-center mt-5" @click="triggerFileUpload">
           <i class="fas fa-upload fa-2x mb-2"></i>
           <p>Nhấn để chọn ảnh thanh toán</p>
           <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*" hidden />

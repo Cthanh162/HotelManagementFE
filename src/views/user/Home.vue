@@ -6,10 +6,10 @@
     <div class="banner">
       <div class="banner-overlay container">
         <h1 class="banner-title">
-          <span class="text-light">Chào mừng bạn đến với</span>
+          <span class="text-light">Chào mừng bạn đến với </span>
           <span class="highlight">ChiThanhHotel</span>
         </h1>
-        <p class="banner-subtitle">Dịch vụ cho thuê phòng khách sạn sang trọng</p>
+        <p class="banner-subtitle">Nâng tầm phong cách sống , khẳng định vị thế .</p>
 
         <!-- Search Bar -->
         <div class="search-bar row g-2 mt-4 justify-content-center">
@@ -270,13 +270,9 @@ function handleSearch() {
 onMounted(async () => {
   try {
     const [mostBookedRes, topRatedRes,roomTypesRes] = await Promise.all([
-      axios.get('/rooms/most-booked', {
-    headers: { Authorization: `Bearer ${token}` }
-  }),
+      axios.get('/rooms/most-booked'),
 
-      axios.get('/rooms/top-rated', {
-    headers: { Authorization: `Bearer ${token}` }
-  }),
+      axios.get('/rooms/top-rated'),
       axios.get('/room-types', {
     headers: { Authorization: `Bearer ${token}` }
   })
@@ -323,6 +319,7 @@ onMounted(async () => {
 .highlight {
   color: #ffc107;
   font-weight: 800;
+  
 }
 .banner-subtitle {
   font-size: 1.2rem;

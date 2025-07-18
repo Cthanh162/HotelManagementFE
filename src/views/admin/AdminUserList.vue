@@ -6,12 +6,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-success" @click="openCreateForm">Thêm mới</button>
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Tìm theo tên, email, sđt, địa chỉ..."
-        class="form-control w-auto"
-      />
+      <input type="text" v-model="searchQuery" placeholder="Tìm kiếm ..." class="form-control w-auto"/>
     </div>
 
     <div class="table-responsive">
@@ -64,49 +59,51 @@
       </ul>
     </nav>
 
-    <!-- Modal Form -->
-    <div v-if="showModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.3);">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ isEdit ? 'Cập nhật người dùng' : 'Thêm mới người dùng' }}</h5>
-            <button class="btn-close" @click="closeModal"></button>
+    
+
+<!-- Modal Form -->
+<form v-if="showModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.3);" @submit.prevent="submitForm($event)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ isEdit ? 'Cập nhật người dùng' : 'Thêm mới người dùng' }}</h5>
+        <button class="btn-close" @click="closeModal" type="button"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Tên tài khoản</label>
+            <input class="form-control" v-model="form.userName" required />
           </div>
-          <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Tên tài khoản</label>
-                <input class="form-control" v-model="form.userName" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input class="form-control" v-model="form.email" />
-              </div>
-              <div class="col-6">
-                <label class="form-label">Họ tên</label>
-                <input class="form-control" v-model="form.fullName" />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Số điện thoại</label>
-                <input class="form-control" v-model="form.phone" />
-              </div>
-              <div class="col-md-6" v-if="!isEdit">
-                <label class="form-label">Mật khẩu</label>
-                <input class="form-control" v-model="form.password" type="password" />
-              </div>
-              <div class="col-6">
-                <label class="form-label">Địa chỉ</label>
-                <input class="form-control" v-model="form.address" />
-              </div>
-            </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" v-model="form.email" type="email" required />
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeModal">Huỷ</button>
-            <button class="btn btn-primary" @click="submitForm">Lưu</button>
+          <div class="col-6">
+            <label class="form-label">Họ tên</label>
+            <input class="form-control" v-model="form.fullName" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Số điện thoại</label>
+            <input class="form-control" v-model="form.phone" required />
+          </div>
+          <div class="col-md-6" v-if="!isEdit">
+            <label class="form-label">Mật khẩu</label>
+            <input class="form-control" v-model="form.password" type="password" required />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Địa chỉ</label>
+            <input class="form-control" v-model="form.address" required />
           </div>
         </div>
       </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" @click="closeModal">Huỷ</button>
+        <button class="btn btn-primary" type="submit">Lưu</button>
+      </div>
     </div>
+  </div>
+</form>
 
     <!-- Xác nhận xoá -->
     <ConfirmModal
@@ -238,9 +235,16 @@ function closeModal() {
   showModal.value = false;
 }
 
-async function submitForm() {
+async function submitForm(e) {
+  const formEl = e.target.closest('form');
+  if (!formEl.checkValidity()) {
+    formEl.reportValidity();
+    return;
+  }
+
   try {
     if (!token) return router.push('/signin');
+
     if (isEdit.value) {
       await axios.put(`/users/${form.value.userId}`, form.value, {
         headers: { Authorization: `Bearer ${token}` }
@@ -252,6 +256,7 @@ async function submitForm() {
       });
       showToast('success', 'Thêm mới thành công!');
     }
+
     closeModal();
     refreshUsers();
   } catch (err) {
@@ -266,6 +271,8 @@ async function submitForm() {
     showToast('danger', msg);
   }
 }
+
+
 
 function deleteUser(id) {
   openConfirmModal('Bạn có chắc chắn muốn xoá người dùng này?', async () => {

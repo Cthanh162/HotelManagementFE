@@ -89,7 +89,14 @@ const bookingId = route.params.id;
 const booking = ref(null);
 
 onMounted(() => {
-  axios.get(`/bookings/${bookingId}`)
+   const token = localStorage.getItem('accessToken');
+  axios.get(`/bookings/${bookingId}`,{
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+    
+  )
     .then(res => {
       booking.value = res.data.data;
     })

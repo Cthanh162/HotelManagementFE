@@ -2,7 +2,7 @@
   <main class="main-content mt-0">
     <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
 
-    <!-- Background header -->
+    <!-- Background -->
     <div class="page-header align-items-start min-vh-50 pt-5 pb-11 m-3 border-radius-lg"
          style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg');
                 background-position: top;">
@@ -11,13 +11,12 @@
         <div class="row justify-content-center">
           <div class="col-lg-5 text-center mx-auto">
             <h1 class="text-white mb-2 mt-5">Đăng ký tài khoản</h1>
-            <p class="text-lead text-white">Tham gia và trải nghiệm dịch vụ tuyệt vời!</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Form đăng ký -->
+    <!-- Form -->
     <div class="container">
       <div class="row mt-lg-n10 mt-md-n11 mt-n10 justify-content-center">
         <div class="col-xl-4 col-lg-5 col-md-7 mx-auto">
@@ -45,22 +44,29 @@
                 </div>
                 <button class="btn btn-primary w-100" type="submit">Đăng ký</button>
               </form>
-              <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
+
+              <!-- Nút quay lại -->
+              <div class="text-center mt-3">
+                <router-link to="/signin" class="text-primary text-sm">Quay lại trang đăng nhập</router-link>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal xác minh -->
-    <div v-if="showVerifyModal" class="modal-backdrop" @click.self="showVerifyModal = false">
+    <!-- Popup xác minh -->
+    <div v-if="showVerifyModal" class="modal-backdrop">
       <div class="modal-content">
         <h5 class="mb-3">Xác minh email</h5>
-        <p>Nhập mã xác minh được gửi tới email của bạn.</p>
+        <p>Nhập mã xác minh được gửi tới email <strong>{{ pendingEmail }}</strong>.</p>
         <input v-model="verifyCode" class="form-control mb-3" type="text" maxlength="6" placeholder="Mã xác minh" />
-        <div class="d-flex justify-content-end">
-          <button class="btn btn-secondary me-2" @click="showVerifyModal = false">Huỷ</button>
-          <button class="btn btn-primary" @click="confirmVerifyCode">Xác minh</button>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-link text-danger" @click="cancelVerification">Huỷ</button>
+          <div>
+            <button class="btn btn-secondary me-2" @click="resendCode">Gửi lại mã</button>
+            <button class="btn btn-primary" @click="confirmVerifyCode">Xác minh</button>
+          </div>
         </div>
       </div>
     </div>
@@ -71,13 +77,10 @@
 import { ref, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '@/config';
+import ToastContainer from '@/components/Toast.vue';
 
 const router = useRouter();
-const form = ref({
-  userName: '',
-  email: '',
-  password: ''
-});
+const form = ref({ userName: '', email: '', password: '' });
 const confirmPassword = ref('');
 const error = ref(null);
 const toastAction = ref('');
@@ -97,6 +100,7 @@ function showToast(action, message) {
     toastAction.value = action;
     toastMessage.value = message;
     toastVisible.value = true;
+
     setTimeout(() => {
       toastVisible.value = false;
     }, 3000);
@@ -106,22 +110,47 @@ function showToast(action, message) {
 async function submit() {
   error.value = null;
 
+  if (form.value.userName.length < 6 || form.value.password.length < 6) {
+    error.value = 'Tên đăng nhập hoặc mật khẩu không hợp lệ';
+    showToast('danger', error.value);
+    return;
+  }
+
   if (form.value.password !== confirmPassword.value) {
     error.value = 'Mật khẩu xác nhận không khớp';
+    showToast('danger', error.value);
     return;
   }
 
   try {
     await axios.post('/signup', form.value);
-    showToast('success', 'Mã xác nhận đã được gửi tới email.');
     pendingEmail.value = form.value.email;
     showVerifyModal.value = true;
+    showToast('success', 'Mã xác minh đã được gửi tới email.');
   } catch (err) {
-    const message = err?.response?.data?.message || 'Đăng ký thất bại';
-    error.value = message;
-    showToast('danger', message);
+    const res = err.response?.data;
+
+    if (res?.errors) {
+      const errors = res.errors;
+
+      if (errors.email && errors.email[0]?.includes('taken')) {
+        error.value = 'Email đã tồn tại.';
+      } else if (errors.userName && errors.userName[0]?.includes('taken')) {
+        error.value = 'Tên đăng nhập đã tồn tại.';
+      } else {
+        const firstError = Object.values(errors)[0][0];
+        error.value = firstError;
+      }
+
+      showToast('danger', error.value);
+    } else {
+      error.value = res?.message || 'Đăng ký thất bại';
+      showToast('danger', error.value);
+    }
   }
 }
+
+
 
 async function confirmVerifyCode() {
   try {
@@ -129,11 +158,32 @@ async function confirmVerifyCode() {
       email: pendingEmail.value,
       code: verifyCode.value
     });
-    showToast('success', 'Xác minh thành công. Chuyển hướng...');
+    showToast('success', 'Đăng ký thành công !');
     showVerifyModal.value = false;
     setTimeout(() => router.push('/signin'), 2000);
   } catch (err) {
-    const msg = err?.response?.data?.message || 'Xác minh thất bại';
+    const msg = err.response?.data?.message || 'Xác minh thất bại ! ';
+    showToast('danger', msg);
+  }
+}
+
+async function cancelVerification() {
+  try {
+    await axios.post('/cancel-verification', { email: pendingEmail.value });
+    showVerifyModal.value = false;
+    showToast('danger', 'Đã huỷ xác minh. Tài khoản đã bị xoá.');
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Huỷ xác minh thất bại';
+    showToast('danger', msg);
+  }
+}
+
+async function resendCode() {
+  try {
+    await axios.post('/resend-code', { email: pendingEmail.value });
+    showToast('success', 'Mã xác minh mới đã được gửi.');
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Không thể gửi lại mã';
     showToast('danger', msg);
   }
 }

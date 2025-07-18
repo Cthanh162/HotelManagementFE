@@ -3,28 +3,39 @@
     <div class="card shadow-sm p-4">
       <ToastContainer :action="toastAction" :message="toastMessage" v-if="toastVisible" />
       <h2 class="mb-2">{{ room.roomName }}</h2>
-      <div class="d-flex justify-content-between align-items-start flex-wrap">
-        <div>
-          <p><strong>Loại phòng:</strong> {{ room.roomType }}</p>
-          <p><strong>Trạng thái:</strong> {{ displayStatus(room.status) }}</p>
-          <p><strong>Người lớn:</strong> {{ room.adults }}</p>
-          <p><strong>Trẻ em:</strong> {{ room.children }}</p>
-          <p><strong>Sức chứa:</strong> {{ room.capacity }}</p>
-          <p><strong>Giá:</strong> {{ formatCurrency(room.price) }} VND / đêm</p>
-        </div>
-        <div class="text-end">
-          <p style="text-align: left;"><strong>Khách sạn:</strong> {{ room.hotelId }}</p>
-          <p style="text-align: left;"> <strong>Tầng:</strong> {{ room.floorId }}</p>
-          <div v-if="services.length" class="mt-2 text-start">
-            <p class="fw-bold mb-1">Dịch vụ đi kèm:</p>
-            <ul class="mb-0 ps-3">
-              <li v-for="s in services" :key="s.id">
-                {{ s.name }} - {{ s.price ? formatCurrency(s.price) + ' VND' : 'Miễn phí' }}
-              </li>
-            </ul>
-          </div>
-        </div>
+
+      <div class="row">
+  <!-- Cột trái -->
+  <div class="col-md-6">
+    <p><strong>Loại phòng:</strong> {{ room.roomType }}</p>
+    <p><strong>Trạng thái:</strong> {{ displayStatus(room.status) }}</p>
+    <p><strong>Người lớn:</strong> {{ room.adults }}</p>
+    <p><strong>Trẻ em:</strong> {{ room.children }}</p>
+    <p><strong>Sức chứa:</strong> {{ room.capacity }}</p>
+    <p><strong>Giá:</strong> {{ formatCurrency(room.price) }} VND / đêm</p>
+  </div>
+
+  <!-- Cột phải: căn giữa toàn bộ cột + căn trái nội dung bên trong -->
+  <div class="col-md-6 mx-auto">
+    <p><strong>Khách sạn:</strong> {{ room.hotelId }}</p>
+    <p><strong>Tầng:</strong> {{ room.floorId }}</p>
+
+    <div v-if="chunkedServices.length" class="mt-2">
+      <p class="fw-bold mb-1"><strong>Dịch vụ đi kèm:</strong></p>
+      <div class="d-flex flex-wrap gap-4">
+        <ul
+          v-for="(column, index) in chunkedServices"
+          :key="index"
+          class="mb-0"
+          style="list-style-type: disc; margin-left: 8px; padding-left: 1.25rem;"
+        >
+          <li v-for="s in column" :key="s.id">{{ s.name }}</li>
+        </ul>
       </div>
+    </div>
+  </div>
+</div>
+
 
       <!-- Media -->
       <div class="row mt-4">
@@ -140,6 +151,18 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from '@/config';
 import dayjs from 'dayjs';
 import ToastContainer from '@/components/Toast.vue';
+//const token = localStorage.getItem('accessToken');
+//if (!token) router.push('/signin');
+
+const chunkedServices = computed(() => {
+  if (!services.value?.length) return [];
+  const activeServices = services.value.filter(s => s.status === 'active');
+  const chunks = [];
+  for (let i = 0; i < activeServices.length; i += 5) {
+    chunks.push(activeServices.slice(i, i + 5));
+  }
+  return chunks;
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -149,6 +172,7 @@ const minDate = ref(new Date().toISOString().split("T")[0]);
 const toastAction = ref('');
 const toastMessage = ref('');
 const toastVisible = ref(false);
+
 
 function showToast(action, message) {
   toastAction.value = '';
@@ -193,8 +217,12 @@ const reviewForm = ref({ rating: '', des: '' });
 
 onMounted(async () => {
   const id = route.params.id;
+  const token = localStorage.getItem('accessToken');
+
   try {
-    const res = await axios.get(`/rooms/${id}`);
+    const res = await axios.get(`/rooms/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     room.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải chi tiết phòng:', err);
@@ -202,14 +230,18 @@ onMounted(async () => {
   }
 
   try {
-    const res = await axios.get(`/reviews/${id}`);
+    const res = await axios.get(`/reviews/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     reviews.value = res.data.data;
   } catch (err) {
     console.error('Lỗi khi tải đánh giá:', err);
   }
 
   try {
-    const res = await axios.get(`/rooms/${id}/services`);
+    const res = await axios.get(`/rooms/${id}/services`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     services.value = res.data.data || [];
   } catch (err) {
     console.error('Lỗi khi lấy dịch vụ phòng:', err);
@@ -219,6 +251,7 @@ onMounted(async () => {
     showReviewPopup.value = true;
   }
 });
+
 
 const totalPrice = computed(() => {
   if (!room.value || !booking.value.checkinTime || !booking.value.checkoutTime) return 0;
@@ -236,7 +269,7 @@ function submitBooking() {
     showToast('warning', 'Vui lòng đăng nhập để đặt phòng.');
     setTimeout(() => {
       router.push('/signin');
-    }, 1500);
+    }, 2500);
     return;
   }
 
@@ -363,5 +396,8 @@ function formatCurrency(val) {
   border-radius: 10px;
   width: 100%;
   max-width: 500px;
+}
+.text-end{
+  margin-left: 430px;
 }
 </style>

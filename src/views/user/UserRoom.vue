@@ -131,7 +131,7 @@ import ToastContainer from '@/components/Toast.vue';
 
 const router = useRouter();
 const token = localStorage.getItem('accessToken');
-if (!token) router.push('/signin');
+
 
 const toastAction = ref('');
 const toastMessage = ref('');

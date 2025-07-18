@@ -6,9 +6,14 @@
 
     <div class="d-flex justify-content-between mb-3">
       <div>
-        <button class="btn btn-sm btn-primary me-1" @click="markAllAsRead">✔️ Đánh dấu tất cả đã đọc</button>
-        <button class="btn btn-danger" @click="deleteAll">🗑️ Xoá tất cả</button>
-      </div>
+  <button class="btn btn-sm btn-primary me-2 fixed-width-btn" @click="markAllAsRead">
+    ✔️ Đánh dấu tất cả đã đọc
+  </button>
+  <button class="btn btn-sm btn-danger fixed-width-btn" @click="deleteAll">
+    🗑️ Xoá tất cả
+  </button>
+</div>
+
       <div class="mb-3 text-end">
         <input
           v-model="searchQuery"
@@ -239,4 +244,11 @@ onMounted(loadReviews);
 .table td {
   vertical-align: middle;
 }
+.fixed-width-btn {
+  padding-left: 16px;
+  padding-right: 16px;
+  font-size: 14px;
+}
+
 </style>
+
